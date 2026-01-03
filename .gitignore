@@ -1,0 +1,16 @@
+# Environment variables
+.env
+
+# Docker
+docker-compose.override.yml
+
+# .NET
+**/bin/
+**/obj/
+**/*.user
+**/*.suo
+*. cache
+*.dll
+*.exe
+*.pdb
+*.log

@@ -1,0 +1,5 @@
+Add model requirements (length, format...)
+Change Type to a Enum
+Add authentication
+Add endpoints
+Add CORS
