@@ -14,3 +14,23 @@ docker-compose.override.yml
 *.exe
 *.pdb
 *.log
+
+# Netflix Extension
+# Dependencies
+netflix-extension/node_modules/
+netflix-extension/bun.lockb
+# Build output
+netflix-extension/dist/
+# TypeScript
+netflix-extension/*. tsbuildinfo
+# Logs
+netflix-extension/*.log
+netflix-extension/npm-debug.log*
+netflix-extension/yarn-debug.log*
+netflix-extension/yarn-error.log*
+# OS
+netflix-extension/. DS_Store
+netflix-extension/Thumbs.db
+# Temp files
+netflix-extension/*.tmp
+netflix-extension/*.temp

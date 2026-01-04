@@ -3,3 +3,8 @@ Change Type to a Enum
 Add authentication
 Add endpoints
 Add CORS
+
+Add readme for each project
+
+Add netflix extension icons
+Add detection of netflix % to post request
