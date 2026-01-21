@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="es">
+
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -10,28 +11,28 @@
       padding: 0;
       box-sizing: border-box;
     }
-    
+
     body {
       width: 450px;
       min-height: 200px;
       padding: 20px;
-      font-family:  -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background:  #141414;
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+      background: #141414;
       color: #fff;
     }
-    
+
     h1 {
       font-size: 20px;
-      margin-bottom:  16px;
+      margin-bottom: 16px;
       display: flex;
       align-items: center;
       gap: 8px;
     }
-    
+
     button {
       width: 100%;
-      padding:  12px;
-      background:  #e50914;
+      padding: 12px;
+      background: #e50914;
       color: white;
       border: none;
       border-radius: 4px;
@@ -40,46 +41,46 @@
       font-weight: 600;
       transition: background 0.2s;
     }
-    
+
     button:hover {
       background: #f40612;
     }
-    
+
     button:active {
       background: #c40812;
     }
-    
+
     button:disabled {
       background: #666;
-      cursor:  not-allowed;
+      cursor: not-allowed;
     }
-    
+
     #result {
-      margin-top:  16px;
-      padding:  16px;
-      background:  #222;
+      margin-top: 16px;
+      padding: 16px;
+      background: #222;
       border-radius: 4px;
       font-size: 13px;
       max-height: 500px;
-      overflow-y:  auto;
+      overflow-y: auto;
     }
-    
+
     #result:empty {
       display: none;
     }
-    
+
     .error {
       color: #e50914;
     }
-    
+
     .success {
       color: #46d369;
     }
-    
+
     .loading {
       color: #ffa500;
     }
-    
+
     pre {
       margin: 0;
       white-space: pre-wrap;
@@ -88,52 +89,54 @@
       font-size: 12px;
       line-height: 1.5;
     }
-    
+
     .media-info {
       display: flex;
       flex-direction: column;
       gap: 12px;
     }
-    
+
     .info-row {
       display: flex;
       flex-direction: column;
       gap: 4px;
     }
-    
+
     .info-label {
       font-weight: 600;
       color: #e50914;
       font-size: 12px;
       text-transform: uppercase;
     }
-    
+
     .info-value {
       color: #fff;
     }
-    
+
     details {
       cursor: pointer;
     }
-    
+
     summary {
       cursor: pointer;
       color: #e50914;
       user-select: none;
     }
-    
+
     summary:hover {
       color: #f40612;
     }
   </style>
 </head>
+
 <body>
   <h1>🎬 Netflix Tracker</h1>
-  
+
   <button id="extractBtn">Extraer Datos de Netflix</button>
-  
+
   <div id="result"></div>
-  
+
   <script src="popup.js"></script>
 </body>
+
 </html>

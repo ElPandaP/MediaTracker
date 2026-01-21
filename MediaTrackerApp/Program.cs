@@ -1,6 +1,8 @@
 using System.Runtime.CompilerServices;
+using System.Reflection;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
+using MediaTrackerApp.Endpoints;
 // Load environment variables from .env
 loadEnvironment();
 
@@ -46,7 +48,15 @@ void configureApi()
 {
     builder.Services.AddControllers();
     builder.Services.AddEndpointsApiExplorer();
-    builder.Services.AddSwaggerGen();
+    builder.Services.AddSwaggerGen(options =>
+    {
+        var xmlFilename = $"{Assembly.GetExecutingAssembly().GetName().Name}.xml";
+        var xmlPath = Path.Combine(AppContext.BaseDirectory, xmlFilename);
+        if (File.Exists(xmlPath))
+        {
+            options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
+        }
+    });
 }
 
 void configurePipeline()
@@ -57,4 +67,5 @@ void configurePipeline()
     // TODO: Add JWT authentication middleware here
     // endpoint mapping
     app.MapControllers();
+    app.MapTrackingEndpoints();
 }

@@ -1,13 +1,15 @@
 {
   "compilerOptions": {
     // Use latest features
-    "lib": ["ESNext", "DOM"],
+    "lib": [
+      "ESNext",
+      "DOM"
+    ],
     "target": "ESNext",
     "module": "ESNext",
     "moduleDetection": "force",
     "jsx": "react-jsx",
     "allowJs": true,
-
     // Chrome Extension specific
     "moduleResolution": "bundler",
     "allowImportingTsExtensions": false,
@@ -15,26 +17,33 @@
     "noEmit": false,
     "outDir": "./dist",
     "rootDir": "./src",
-
     // Type definitions
-    "types": ["chrome", "bun"],
-    "typeRoots": ["./node_modules/@types"],
-
+    "types": [
+      "chrome",
+      "bun"
+    ],
+    "typeRoots": [
+      "./node_modules/@types"
+    ],
     // Best practices
     "strict": true,
-    "skipLibCheck":  true,
+    "skipLibCheck": true,
     "noFallthroughCasesInSwitch": true,
     "noUncheckedIndexedAccess": true,
     "noImplicitOverride": true,
-    "esModuleInterop":  true,
+    "esModuleInterop": true,
     "forceConsistentCasingInFileNames": true,
     "resolveJsonModule": true,
-
     // Some stricter flags
     "noUnusedLocals": false,
     "noUnusedParameters": false,
     "noPropertyAccessFromIndexSignature": false
   },
-  "include": ["src/**/*"],
-  "exclude": ["node_modules", "dist"]
+  "include": [
+    "src/**/*"
+  ],
+  "exclude": [
+    "node_modules",
+    "dist"
+  ]
 }

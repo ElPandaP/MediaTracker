@@ -28,7 +28,7 @@ await Bun.build({
   outdir: "./dist",
   target: "browser",
   minify: false,
-  sourcemap:  "external",
+  sourcemap: "external",
 });
 
 // Copy static files
