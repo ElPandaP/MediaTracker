@@ -1,8 +1,26 @@
 using System.Runtime.CompilerServices;
 using System.Reflection;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Internal;
-using MediaTrackerApp.Endpoints;
+using MediaTrackerApp.Features.User.Login;
+using MediaTrackerApp.Features.User.Register;
+using MediaTrackerApp.Features.User.EditUser;
+using MediaTrackerApp.Features.User.DeleteUser;
+using MediaTrackerApp.Features.Media.AddMedia;
+using MediaTrackerApp.Features.Media.GetMedia;
+using MediaTrackerApp.Features.TrackingEvent.AddTrackingEvent;
+using MediaTrackerApp.Features.TrackingEvent.GetTrackingEvents;
+using MediaTrackerApp.Features.Review.AddReview;
+using MediaTrackerApp.Features.Review.EditReview;
+using MediaTrackerApp.Features.Review.DeleteReview;
+using MediaTrackerApp.Features.User;
+using MediaTrackerApp.Features.Media;
+using MediaTrackerApp.Features.TrackingEvent;
+using MediaTrackerApp.Features.Review;
+using MediaTrackerApp.Auth;
+
 // Load environment variables from .env
 loadEnvironment();
 
@@ -10,6 +28,7 @@ var builder = WebApplication.CreateBuilder(args);
 
 // Configure services
 configureDatabase();
+configureAuth();
 configureApi();
 
 var app = builder.Build();
@@ -44,6 +63,52 @@ void configureDatabase()
     );
 }
 
+void configureAuth()
+{
+    var jwtSecret = builder.Configuration["JwtSettings:Secret"] ?? Environment.GetEnvironmentVariable("JWT_SECRET");
+    var jwtIssuer = builder.Configuration["JwtSettings:Issuer"] ?? "MediaTrackerApp";
+    var jwtAudience = builder.Configuration["JwtSettings:Audience"] ?? "MediaTrackerApp";
+
+    if (string.IsNullOrEmpty(jwtSecret))
+    {
+        throw new InvalidOperationException("JWT_SECRET must be configured in environment variables or appsettings");
+    }
+
+    builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+        .AddJwtBearer(options =>
+        {
+            options.TokenValidationParameters = new Microsoft.IdentityModel.Tokens.TokenValidationParameters
+            {
+                ValidateIssuer = true,
+                ValidateAudience = true,
+                ValidateLifetime = true,
+                ValidateIssuerSigningKey = true,
+                ValidIssuer = jwtIssuer,
+                ValidAudience = jwtAudience,
+                IssuerSigningKey = new Microsoft.IdentityModel.Tokens.SymmetricSecurityKey(
+                    System.Text.Encoding.UTF8.GetBytes(jwtSecret))
+            };
+        });
+
+    builder.Services.AddAuthorizationBuilder()
+        .AddPolicy(Policies.UserPolicy, policy => 
+        {
+            policy.RequireAuthenticatedUser();
+        })
+        .AddPolicy(Policies.InternalOnly, policy =>
+        {
+            policy.Requirements.Add(new InternalApiKeyRequirement());
+        })
+        .AddPolicy(Policies.UserAndInternal, policy =>
+        {
+            policy.RequireAuthenticatedUser();
+            policy.Requirements.Add(new InternalApiKeyRequirement());
+        });
+
+    builder.Services.AddScoped<IAuthorizationHandler, InternalApiKeyHandler>();
+    builder.Services.AddScoped<JwtService>();
+}
+
 void configureApi()
 {
     builder.Services.AddControllers();
@@ -57,6 +122,15 @@ void configureApi()
             options.IncludeXmlComments(xmlPath, includeControllerXmlComments: true);
         }
     });
+
+    // Register Shared Services (REPR pattern)
+    builder.Services.AddScoped<UserService>();
+    builder.Services.AddScoped<MediaService>();
+    builder.Services.AddScoped<TrackingEventService>();
+    builder.Services.AddScoped<ReviewService>();
+    
+    // Add automatic model validation filter
+    builder.Services.AddScoped<IEndpointFilter, ValidationFilter>();
 }
 
 void configurePipeline()
@@ -64,8 +138,33 @@ void configurePipeline()
     app.UseSwagger();
     app.UseSwaggerUI();
     app.UseHttpsRedirection();
-    // TODO: Add JWT authentication middleware here
-    // endpoint mapping
-    app.MapControllers();
-    app.MapTrackingEndpoints();
+    
+    app.UseAuthentication();
+    app.UseAuthorization();
+    
+    // Map endpoints by feature (REPR pattern)
+    var apiGroup = app.MapGroup("/api").WithName("API");
+    
+    // Public endpoints
+    LoginEndpoint.Map(apiGroup);
+    
+    // User endpoints (JWT + API Key)
+    AddMediaEndpoint.Map(apiGroup);
+    AddTrackingEventEndpoint.Map(apiGroup);
+    RegisterEndpoint.Map(apiGroup);
+    
+    // User data endpoints (JWT)
+    GetTrackingEventsEndpoint.Map(apiGroup);
+    
+    // Internal API endpoints (API Key)
+    GetMediaEndpoint.Map(apiGroup);
+    
+    // User management endpoints (JWT + API Key)
+    EditUserEndpoint.Map(apiGroup);
+    DeleteUserEndpoint.Map(apiGroup);
+    
+    // Review endpoints (JWT + API Key)
+    AddReviewEndpoint.Map(apiGroup);
+    EditReviewEndpoint.Map(apiGroup);
+    DeleteReviewEndpoint.Map(apiGroup);
 }

@@ -22,9 +22,6 @@ public class Media
     [Range(1, int.MaxValue, ErrorMessage = "Length must be greater than 0")]
     public int Length { get; set; }
     
-    [StringLength(500, ErrorMessage = "External ID cannot exceed 500 characters")]
-    public string? ExternalId { get; set; }
-    
     [Url(ErrorMessage = "Invalid URL format for PosterUrl")]
     [StringLength(2048, ErrorMessage = "PosterUrl cannot exceed 2048 characters")]
     public string? PosterUrl { get; set; }

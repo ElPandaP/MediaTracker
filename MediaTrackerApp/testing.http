@@ -1,1 +1,85 @@
-GET http://localhost:5112/
+@api = http://localhost:5112
+@contentType = application/json
+@token = a
+@userId = a
+@mediaId = 1
+@reviewId = 1
+@internalApiKey = dev-internal-key-change-in-production
+
+
+POST {{api}}/api/login
+Content-Type: {{contentType}}
+
+{
+  "email": "newuser@example.com",
+  "password": "SecurePassword123"
+}
+
+POST {{api}}/api/register
+Content-Type: {{contentType}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+{
+  "email": "newuser2@example.com",
+  "username": "newuser",
+  "password": "SecurePassword123"
+}
+
+POST {{api}}/api/media
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "The Last of Us",
+  "type": "Series",
+  "length": 9
+}
+
+POST {{api}}/api/tracking
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+
+{
+  "title": "The Last of Us",
+  "type": "Series",
+  "length": 9,
+  "progress": 50
+}
+
+GET {{api}}/api/tracking?Type=Series&Limit=10&OrderBy=date_desc
+Authorization: Bearer {{token}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+GET {{api}}/api/media?Type=Movie&Limit=5&OrderBy=title_asc
+X-Internal-Api-Key: {{internalApiKey}}
+
+PUT {{api}}/api/user/{{userId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+{
+  "username": "newusername",
+  "email": "newemail@example.com",
+  "password": "NewPassword123"
+}
+
+DELETE {{api}}/api/user/{{userId}}
+Authorization: Bearer {{token}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+PUT {{api}}/api/review/{{reviewId}}
+Content-Type: {{contentType}}
+Authorization: Bearer {{token}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+{
+  "rating": 9,
+  "comment": "Actually it's even better!"
+}
+
+DELETE {{api}}/api/review/{{reviewId}}
+Authorization: Bearer {{token}}
+X-Internal-Api-Key: {{internalApiKey}}
+
+
