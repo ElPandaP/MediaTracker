@@ -18,3 +18,18 @@ docker compose --profile db run --rm migrator
 ```
 
 Esto aplica `dotnet ef database update` contra la base de datos definida en `.env`.
+
+## Variables importantes para VM
+
+Para que el frontend en el navegador pueda llamar al backend, configura en `.env` una URL pública (no `backend:8080`):
+
+```bash
+NEXT_PUBLIC_API_URL=http://143.47.54.63:8080/api
+CORS_ALLOWED_ORIGINS=http://143.47.54.63
+```
+
+Luego reconstruye el frontend:
+
+```bash
+docker compose up -d --build frontend backend
+```
