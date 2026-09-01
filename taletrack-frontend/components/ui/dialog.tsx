@@ -4,6 +4,7 @@ import * as React from "react"
 import { Dialog as DialogPrimitive } from "radix-ui"
 import { X } from "lucide-react"
 
+import { useT } from "@/lib/i18n"
 import { cn } from "@/lib/utils"
 
 function Dialog(props: React.ComponentProps<typeof DialogPrimitive.Root>) {
@@ -46,6 +47,7 @@ function DialogContent({
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const t = useT()
   return (
     <DialogPortal>
       <DialogOverlay />
@@ -61,7 +63,7 @@ function DialogContent({
         {showCloseButton && (
           <DialogPrimitive.Close
             data-slot="dialog-close"
-            aria-label="Close"
+            aria-label={t('a11y.close')}
             className="absolute top-4 right-4 rounded-lg p-1 text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none cursor-pointer"
           >
             <X className="size-4" />

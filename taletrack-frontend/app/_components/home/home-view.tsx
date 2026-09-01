@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { ReviewModal, type ReviewTarget } from '@/components/media/review-modal';
+import { useT } from '@/lib/i18n';
 import type { LibraryItem, LibraryType, YearlyStats } from '@/lib/types';
 import { ProfileCard } from './profile-card';
 import { MonthlyStatsCard } from './monthly-stats-card';
@@ -23,18 +24,23 @@ export interface HomeData {
 }
 
 export default function HomeView({ data }: { data: HomeData }) {
+  const t = useT();
   const [target, setTarget] = useState<ReviewTarget | null>(null);
   const [modalOpen, setModalOpen] = useState(false);
 
-  const openReview = (t: ReviewTarget) => {
-    setTarget(t);
+  const openReview = (next: ReviewTarget) => {
+    setTarget(next);
     setModalOpen(true);
   };
+
+  const [greetBefore, greetAfter = ''] = t('home.greeting').split('{name}');
 
   return (
     <>
       <h1 className="mb-6 font-heading text-3xl font-semibold">
-        Hi, <span className="text-primary italic">{data.username}</span>
+        {greetBefore}
+        <span className="text-primary italic">{data.username}</span>
+        {greetAfter}
       </h1>
 
       <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_280px]">

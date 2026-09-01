@@ -8,15 +8,16 @@ import { StarRating, toStars } from '@/components/media/star-rating';
 import { Progress } from '@/components/ui/progress';
 import { Button } from '@/components/ui/button';
 import { ReviewModal, type ReviewTarget } from '@/components/media/review-modal';
+import { useI18n } from '@/lib/i18n';
 import type { MediaDetail } from '@/lib/types';
 
-function fmtDate(iso: string) {
-  return new Date(iso).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' });
-}
-
 export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
+  const { t, tp, locale } = useI18n();
   const [modalOpen, setModalOpen] = useState(false);
   const meta = typeMeta[detail.type];
+
+  const fmtDate = (iso: string) =>
+    new Date(iso).toLocaleDateString(locale, { day: 'numeric', month: 'short', year: 'numeric' });
 
   const target: ReviewTarget = {
     mediaId: detail.id,
@@ -28,7 +29,8 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
     comment: detail.myComment,
   };
 
-  const unit = detail.type === 'Book' ? 'pages' : detail.type === 'Series' ? 'episodes' : 'min';
+  const unitKey =
+    detail.type === 'Book' ? 'media.unit.pages' : detail.type === 'Series' ? 'media.unit.episodes' : 'media.unit.min';
   const progress = detail.myProgress ?? 0;
 
   return (
@@ -38,7 +40,7 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
         className="mb-6 inline-flex items-center gap-1.5 text-sm text-muted-foreground transition-colors hover:text-foreground"
       >
         <ArrowLeft aria-hidden="true" className="size-4" />
-        Library
+        {t('nav.library')}
       </Link>
 
       <div className="flex flex-col gap-6 sm:flex-row">
@@ -51,17 +53,23 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
         />
 
         <div className="min-w-0 flex-1">
-          <p className={`text-xs font-medium ${meta.text}`}>{meta.label}</p>
+          <p className={`text-xs font-medium ${meta.text}`}>{t(`type.${detail.type}`)}</p>
           <h1 className="mt-1 font-heading text-2xl font-semibold">{detail.title}</h1>
           {detail.author && <p className="mt-0.5 text-muted-foreground">{detail.author}</p>}
 
           <div className="mt-3 flex flex-wrap items-center gap-x-4 gap-y-1 text-sm text-muted-foreground">
-            {detail.length > 0 && <span>{detail.length} {unit}</span>}
+            {detail.length > 0 && (
+              <span>
+                {detail.length} {t(unitKey)}
+              </span>
+            )}
             {detail.avgRating != null && (
               <span className="flex items-center gap-1.5">
                 <StarRating stars={toStars(detail.avgRating)} />
-                {(detail.avgRating / 2).toFixed(1)} · {detail.reviewCount}{' '}
-                {detail.reviewCount === 1 ? 'review' : 'reviews'}
+                {t('media.avgRatings', {
+                  avg: (detail.avgRating / 2).toFixed(1),
+                  reviews: tp('common.reviews', detail.reviewCount),
+                })}
               </span>
             )}
           </div>
@@ -73,7 +81,7 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
           {/* Your status */}
           <div className="tt-card mt-5 flex flex-col gap-3 p-4">
             <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/70 uppercase">
-              Your status
+              {t('media.yourStatus')}
             </p>
             {detail.myProgress != null ? (
               <div className="flex items-center gap-3">
@@ -83,17 +91,21 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
                 </span>
               </div>
             ) : (
-              <p className="text-sm text-muted-foreground">Not tracked yet.</p>
+              <p className="text-sm text-muted-foreground">{t('media.notTracked')}</p>
             )}
 
             <div className="flex items-center justify-between gap-3">
               {detail.myRating != null ? (
                 <StarRating stars={toStars(detail.myRating)} size="md" />
               ) : (
-                <span className="text-sm text-muted-foreground">No rating yet</span>
+                <span className="text-sm text-muted-foreground">{t('media.noRating')}</span>
               )}
-              <Button size="sm" variant={detail.myReviewId ? 'outline' : 'default'} onClick={() => setModalOpen(true)}>
-                {detail.myReviewId ? 'Edit review' : 'Write a review'}
+              <Button
+                size="sm"
+                variant={detail.myReviewId ? 'outline' : 'default'}
+                onClick={() => setModalOpen(true)}
+              >
+                {t(detail.myReviewId ? 'media.editReview' : 'media.writeReview')}
               </Button>
             </div>
           </div>
@@ -102,12 +114,15 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
 
       {/* All reviews */}
       <h2 className="mt-10 mb-4 font-heading text-lg font-semibold">
-        Reviews {detail.reviewCount > 0 && <span className="text-muted-foreground">· {detail.reviewCount}</span>}
+        {t('media.reviewsHeading')}{' '}
+        {detail.reviewCount > 0 && (
+          <span className="text-muted-foreground">· {detail.reviewCount}</span>
+        )}
       </h2>
 
       {detail.reviews.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-10 text-center text-sm text-muted-foreground">
-          No reviews yet. Be the first.
+          {t('media.reviewsEmpty')}
         </p>
       ) : (
         <ul className="flex flex-col gap-3">
@@ -116,7 +131,11 @@ export default function MediaDetailClient({ detail }: { detail: MediaDetail }) {
               <div className="flex items-center justify-between gap-2">
                 <span className="text-sm font-medium text-foreground">
                   @{r.username ?? 'user'}
-                  {r.mine && <span className="ml-1.5 text-xs font-normal text-muted-foreground">(you)</span>}
+                  {r.mine && (
+                    <span className="ml-1.5 text-xs font-normal text-muted-foreground">
+                      {t('media.you')}
+                    </span>
+                  )}
                 </span>
                 <span className="text-xs text-muted-foreground">{fmtDate(r.createdAt)}</span>
               </div>

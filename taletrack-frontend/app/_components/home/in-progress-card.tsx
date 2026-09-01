@@ -1,18 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import { Progress } from '@/components/ui/progress';
 import { Cover } from '@/components/media/cover';
+import { useT } from '@/lib/i18n';
 import type { LibraryItem } from '@/lib/types';
 
 const MAX_ROWS = 6;
 
 export function InProgressCard({ items }: { items: LibraryItem[] }) {
+  const t = useT();
   const shown = items.slice(0, MAX_ROWS);
 
   return (
     <div className="tt-card flex flex-col gap-3 p-4">
       <div className="flex items-baseline justify-between">
         <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/70 uppercase">
-          In progress
+          {t('home.inProgress')}
         </p>
         {items.length > 0 && (
           <span className="text-[10px] text-muted-foreground/70">{items.length}</span>
@@ -20,7 +24,7 @@ export function InProgressCard({ items }: { items: LibraryItem[] }) {
       </div>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Nothing in progress.</p>
+        <p className="text-sm text-muted-foreground">{t('home.inProgress.empty')}</p>
       ) : (
         <ul className="flex flex-col gap-2.5">
           {shown.map((item) => {

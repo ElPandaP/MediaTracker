@@ -4,8 +4,9 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
 import useEmblaCarousel from 'embla-carousel-react';
 import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
-import { Cover, typeMeta } from '@/components/media/cover';
+import { Cover } from '@/components/media/cover';
 import { StarRating, toStars } from '@/components/media/star-rating';
+import { useT } from '@/lib/i18n';
 import type { LibraryItem, LibraryType } from '@/lib/types';
 
 export function TypeCarousel({
@@ -17,7 +18,8 @@ export function TypeCarousel({
   items: LibraryItem[];
   total?: number;
 }) {
-  const meta = typeMeta[type];
+  const t = useT();
+  const plural = t(`typePlural.${type}`);
   const count = total ?? items.length;
   const [emblaRef, emblaApi] = useEmblaCarousel({
     dragFree: true,
@@ -59,21 +61,21 @@ export function TypeCarousel({
     <section aria-labelledby={`carousel-${type}`}>
       <div className="mb-3 flex items-baseline justify-between gap-2">
         <h2 id={`carousel-${type}`} className="font-heading text-xl font-semibold">
-          {meta.plural}
+          {plural}
         </h2>
         <div className="flex items-center gap-2">
           <Link
             href={`/library?type=${type}`}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            {count} · see all →
+            {t('home.carousel.seeAllCount', { count })}
           </Link>
           <div className="flex gap-1">
             <button
               type="button"
               onClick={() => emblaApi?.scrollPrev()}
               disabled={!canPrev}
-              aria-label={`${meta.plural}: previous`}
+              aria-label={t('home.carousel.prev', { items: plural })}
               className="flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronLeft aria-hidden="true" className="size-4" />
@@ -82,7 +84,7 @@ export function TypeCarousel({
               type="button"
               onClick={() => emblaApi?.scrollNext()}
               disabled={!canNext}
-              aria-label={`${meta.plural}: next`}
+              aria-label={t('home.carousel.next', { items: plural })}
               className="flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
               <ChevronRight aria-hidden="true" className="size-4" />
@@ -93,7 +95,7 @@ export function TypeCarousel({
 
       {items.length === 0 ? (
         <p className="rounded-xl border border-dashed border-border px-4 py-6 text-center text-sm text-muted-foreground">
-          No {meta.plural.toLowerCase()} tracked yet.
+          {t('home.carousel.empty', { items: plural.toLowerCase() })}
         </p>
       ) : (
         <div
@@ -133,7 +135,7 @@ export function TypeCarousel({
                   className="group flex aspect-2/3 flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
                 >
                   <ArrowRight aria-hidden="true" className="size-5" />
-                  <span className="text-xs font-medium">See all</span>
+                  <span className="text-xs font-medium">{t('home.carousel.seeAll')}</span>
                   <span className="text-[11px] opacity-70">{count}</span>
                 </Link>
               </figure>

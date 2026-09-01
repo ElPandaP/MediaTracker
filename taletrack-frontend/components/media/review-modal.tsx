@@ -11,10 +11,11 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog';
 import { Button } from '@/components/ui/button';
-import { Cover, typeMeta } from '@/components/media/cover';
+import { Cover } from '@/components/media/cover';
 import { toStars, toRating10 } from '@/components/media/star-rating';
 import { StarRatingInput } from '@/components/media/star-rating-input';
 import { reviewService } from '@/lib/api/services';
+import { useT } from '@/lib/i18n';
 import type { LibraryType } from '@/lib/types';
 
 const MAX_COMMENT = 400;
@@ -41,6 +42,7 @@ export function ReviewModal({
   onSaved?: () => void;
 }) {
   const router = useRouter();
+  const t = useT();
   const [stars, setStars] = useState(0);
   const [comment, setComment] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -58,7 +60,7 @@ export function ReviewModal({
 
   const handleSubmit = async () => {
     if (!target || stars < 1) {
-      setError('Pick a rating.');
+      setError(t('reviewModal.pickRating'));
       return;
     }
     setSubmitting(true);
@@ -75,7 +77,7 @@ export function ReviewModal({
       onSaved?.();
       router.refresh();
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Couldn't save the review.");
+      setError(err instanceof Error ? err.message : t('reviewModal.saveError'));
     } finally {
       setSubmitting(false);
     }
@@ -85,9 +87,11 @@ export function ReviewModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-w-lg">
         <DialogHeader>
-          <DialogTitle>{isEdit ? 'Edit review' : 'Your review'}</DialogTitle>
+          <DialogTitle>{t(isEdit ? 'reviewModal.titleEdit' : 'reviewModal.titleNew')}</DialogTitle>
           <DialogDescription>
-            {target ? `${typeMeta[target.type].label} · ${target.title}` : ''}
+            {target
+              ? t('reviewModal.subtitle', { type: t(`type.${target.type}`), title: target.title })
+              : ''}
           </DialogDescription>
         </DialogHeader>
 
@@ -102,7 +106,9 @@ export function ReviewModal({
             />
             <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div>
-                <p className="mb-1.5 text-xs font-medium text-muted-foreground">Rating</p>
+                <p className="mb-1.5 text-xs font-medium text-muted-foreground">
+                  {t('reviewModal.rating')}
+                </p>
                 <StarRatingInput value={stars} onChange={setStars} />
               </div>
               <div>
@@ -110,7 +116,10 @@ export function ReviewModal({
                   htmlFor="review-comment"
                   className="mb-1.5 block text-xs font-medium text-muted-foreground"
                 >
-                  Review <span className="text-muted-foreground/60">· max {MAX_COMMENT}</span>
+                  {t('reviewModal.reviewLabel')}{' '}
+                  <span className="text-muted-foreground/60">
+                    {t('reviewModal.maxChars', { max: MAX_COMMENT })}
+                  </span>
                 </label>
                 <textarea
                   id="review-comment"
@@ -118,7 +127,7 @@ export function ReviewModal({
                   maxLength={MAX_COMMENT}
                   onChange={(e) => setComment(e.target.value)}
                   rows={4}
-                  placeholder="What did you think?"
+                  placeholder={t('reviewModal.placeholder')}
                   className="tt-input resize-none px-3 py-2"
                 />
                 <p className="mt-1 text-right text-[11px] text-muted-foreground/60">
@@ -135,10 +144,12 @@ export function ReviewModal({
 
         <DialogFooter>
           <Button variant="ghost" onClick={() => onOpenChange(false)} disabled={submitting}>
-            Cancel
+            {t('reviewModal.cancel')}
           </Button>
           <Button onClick={handleSubmit} disabled={submitting || stars < 1}>
-            {submitting ? 'Saving…' : isEdit ? 'Save' : 'Publish'}
+            {submitting
+              ? t('reviewModal.saving')
+              : t(isEdit ? 'reviewModal.save' : 'reviewModal.publish')}
           </Button>
         </DialogFooter>
       </DialogContent>

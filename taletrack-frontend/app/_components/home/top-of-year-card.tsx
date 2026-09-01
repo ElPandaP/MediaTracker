@@ -1,17 +1,22 @@
+'use client';
+
 import Link from 'next/link';
 import { Cover } from '@/components/media/cover';
 import { StarRating, toStars } from '@/components/media/star-rating';
+import { useT } from '@/lib/i18n';
 import type { LibraryItem } from '@/lib/types';
 
 export function TopOfYearCard({ items }: { items: LibraryItem[] }) {
+  const t = useT();
+
   return (
     <div className="tt-card flex flex-col gap-3 p-4">
       <p className="text-[10px] font-semibold tracking-widest text-muted-foreground/70 uppercase">
-        Top of the year
+        {t('home.topOfYear')}
       </p>
 
       {items.length === 0 ? (
-        <p className="text-sm text-muted-foreground">Rate titles to see them here.</p>
+        <p className="text-sm text-muted-foreground">{t('home.topOfYear.empty')}</p>
       ) : (
         <ul className="grid grid-cols-3 gap-3">
           {items.slice(0, 3).map((item) => (

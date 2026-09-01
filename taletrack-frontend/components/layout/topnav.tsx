@@ -6,14 +6,16 @@ import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
 import { Leaf, Search, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import ThemeToggle from './theme-toggle';
+import LocaleToggle from './locale-toggle';
 
 const navItems = [
-  { href: '/', label: 'Home', exact: true },
-  { href: '/library', label: 'Library' },
-  { href: '/reviews', label: 'Reviews' },
-  { href: '/activity', label: 'Activity', soon: true },
+  { href: '/', key: 'nav.home', exact: true },
+  { href: '/library', key: 'nav.library' },
+  { href: '/reviews', key: 'nav.reviews' },
+  { href: '/activity', key: 'nav.activity', soon: true },
 ];
 
 function initials(name: string) {
@@ -31,6 +33,7 @@ type PillRect = { left: number; top: number; width: number; height: number };
 function NavItems({ className, compact = false }: { className?: string; compact?: boolean }) {
   const pathname = usePathname();
   const reduceMotion = useReducedMotion();
+  const t = useT();
   const navRef = useRef<HTMLElement>(null);
   const [pill, setPill] = useState<PillRect | null>(null);
   const pad = compact ? 'px-3 py-1' : 'px-3 py-1.5';
@@ -86,13 +89,13 @@ function NavItems({ className, compact = false }: { className?: string; compact?
           return (
             <span
               key={item.href}
-              title="Coming soon"
+              title={t('nav.comingSoon')}
               className={cn(
                 'relative z-10 shrink-0 cursor-default rounded-lg text-sm font-medium text-muted-foreground/40',
                 pad,
               )}
             >
-              {item.label}
+              {t(item.key)}
             </span>
           );
         }
@@ -111,7 +114,7 @@ function NavItems({ className, compact = false }: { className?: string; compact?
               active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
             )}
           >
-            {item.label}
+            {t(item.key)}
           </Link>
         );
       })}
@@ -132,6 +135,7 @@ const bareRoutes = new Set(['/login', '/register']);
 export default function TopNav({ authed }: { authed: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
+  const t = useT();
   const { user, isAuthenticated, logout } = useAuth();
   const [query, setQuery] = useState('');
   const menuRef = useRef<HTMLDetailsElement>(null);
@@ -186,12 +190,13 @@ export default function TopNav({ authed }: { authed: boolean }) {
               type="search"
               value={query}
               onChange={(e) => setQuery(e.target.value)}
-              placeholder="Search…"
-              aria-label="Search the library"
+              placeholder={t('nav.search')}
+              aria-label={t('nav.searchAria')}
               className="h-8 w-40 rounded-lg border border-border bg-secondary/50 pr-3 pl-8 text-sm text-foreground transition-colors placeholder:text-muted-foreground/50 focus:border-primary/60 focus:bg-secondary/70 focus:outline-none"
             />
           </form>
 
+          <LocaleToggle />
           <ThemeToggle compact />
 
           {/* User menu */}
@@ -199,7 +204,7 @@ export default function TopNav({ authed }: { authed: boolean }) {
             <details ref={menuRef} className="group relative">
               <summary
                 className="flex size-8 cursor-pointer list-none items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-xs font-semibold text-primary select-none [&::-webkit-details-marker]:hidden"
-                aria-label="Account menu"
+                aria-label={t('nav.accountMenu')}
               >
                 {initials(user?.username ?? 'U')}
               </summary>
@@ -215,7 +220,7 @@ export default function TopNav({ authed }: { authed: boolean }) {
                   className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
                 >
                   <User aria-hidden="true" className="size-4" />
-                  View profile
+                  {t('nav.viewProfile')}
                 </Link>
                 <button
                   type="button"
@@ -223,7 +228,7 @@ export default function TopNav({ authed }: { authed: boolean }) {
                   className="flex w-full items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-destructive/10 hover:text-destructive"
                 >
                   <LogOut aria-hidden="true" className="size-4" />
-                  Log out
+                  {t('nav.logout')}
                 </button>
               </div>
             </details>

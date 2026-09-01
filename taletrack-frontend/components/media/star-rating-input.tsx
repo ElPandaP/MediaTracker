@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import { Star } from 'lucide-react';
+import { useI18n } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 import { starSize } from './star-rating';
 
@@ -15,6 +16,7 @@ export function StarRatingInput({
   onChange: (stars: number) => void;
   size?: keyof typeof starSize;
 }) {
+  const { tp } = useI18n();
   const [hover, setHover] = useState(0);
   const shown = hover || value;
 
@@ -26,7 +28,7 @@ export function StarRatingInput({
           type="button"
           onClick={() => onChange(n)}
           onMouseEnter={() => setHover(n)}
-          aria-label={`${n} ${n === 1 ? 'star' : 'stars'}`}
+          aria-label={tp('a11y.starN', n)}
           aria-pressed={value === n}
           className="cursor-pointer rounded-sm p-0.5 text-primary transition-transform hover:scale-110 focus-visible:ring-2 focus-visible:ring-ring focus-visible:outline-none"
         >

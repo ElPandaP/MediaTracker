@@ -1,4 +1,7 @@
+'use client';
+
 import { Star } from 'lucide-react';
+import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
 
 /**
@@ -15,7 +18,7 @@ export const starSize = {
   lg: 'size-6',
 } as const;
 
-/** Read-only rating display. Universal component — safe in Server Components. */
+/** Read-only rating display. */
 export function StarRating({
   stars,
   size = 'sm',
@@ -25,11 +28,12 @@ export function StarRating({
   size?: keyof typeof starSize;
   className?: string;
 }) {
+  const t = useT();
   return (
     <div
       className={cn('inline-flex items-center gap-0.5 text-primary', className)}
       role="img"
-      aria-label={`${stars} out of 5 stars`}
+      aria-label={t('a11y.starsOf5', { count: stars })}
     >
       {[1, 2, 3, 4, 5].map((n) => (
         <Star

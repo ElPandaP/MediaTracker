@@ -3,16 +3,18 @@
 import { motion } from 'framer-motion';
 import { Sun, Moon } from 'lucide-react';
 import { useTheme } from '@/lib/theme-context';
+import { useT } from '@/lib/i18n';
 
 export default function ThemeToggle({ compact = false }: { compact?: boolean }) {
   const { theme, toggleTheme } = useTheme();
+  const t = useT();
   const isDark = theme === 'dark';
 
   if (compact) {
     return (
       <button
         onClick={toggleTheme}
-        aria-label="Toggle theme"
+        aria-label={t('a11y.toggleTheme')}
         className="relative w-9 h-9 rounded-full border border-border bg-secondary/60 hover:bg-secondary flex items-center justify-center transition-colors cursor-pointer"
       >
         <motion.div
@@ -34,7 +36,7 @@ export default function ThemeToggle({ compact = false }: { compact?: boolean }) 
   return (
     <button
       onClick={toggleTheme}
-      aria-label="Toggle theme"
+      aria-label={t('a11y.toggleTheme')}
       className="relative inline-flex items-center h-8 w-16 rounded-full p-1 border border-border transition-colors duration-300 cursor-pointer focus:outline-none focus-visible:ring-2 focus-visible:ring-primary"
       style={{ backgroundColor: isDark ? 'oklch(0.17 0.033 62)' : 'oklch(0.93 0.025 82)' }}
     >

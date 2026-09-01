@@ -3,13 +3,15 @@ import { BookOpen, Film, Tv } from 'lucide-react';
 import type { LibraryType } from '@/lib/types';
 import { cn } from '@/lib/utils';
 
+// Styling / icon per media type. Labels are translated at the call site via
+// `t(`type.${type}`)` / `t(`typePlural.${type}`)`.
 export const typeMeta: Record<
   LibraryType,
-  { label: string; plural: string; text: string; bg: string; border: string; Icon: typeof BookOpen }
+  { text: string; bg: string; border: string; Icon: typeof BookOpen }
 > = {
-  Book:   { label: 'Book',   plural: 'Books',  text: 'text-chart-1', bg: 'bg-chart-1/10', border: 'border-chart-1/20', Icon: BookOpen },
-  Movie:  { label: 'Movie',  plural: 'Movies', text: 'text-chart-2', bg: 'bg-chart-2/10', border: 'border-chart-2/20', Icon: Film },
-  Series: { label: 'Series', plural: 'Series', text: 'text-chart-3', bg: 'bg-chart-3/10', border: 'border-chart-3/20', Icon: Tv },
+  Book:   { text: 'text-chart-1', bg: 'bg-chart-1/10', border: 'border-chart-1/20', Icon: BookOpen },
+  Movie:  { text: 'text-chart-2', bg: 'bg-chart-2/10', border: 'border-chart-2/20', Icon: Film },
+  Series: { text: 'text-chart-3', bg: 'bg-chart-3/10', border: 'border-chart-3/20', Icon: Tv },
 };
 
 /**
