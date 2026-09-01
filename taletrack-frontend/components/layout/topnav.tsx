@@ -3,6 +3,7 @@
 import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
+import { motion, useReducedMotion } from 'framer-motion';
 import { Leaf, Search, User, LogOut } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { cn } from '@/lib/utils';
@@ -19,7 +20,116 @@ function initials(name: string) {
   return name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
 }
 
-export default function TopNav() {
+type PillRect = { left: number; top: number; width: number; height: number };
+
+/**
+ * Nav links with a single, always-mounted "pill" that animates its position and
+ * width to sit under the active link. We measure the active <Link> and drive the
+ * pill's `x`/`width` — this survives Next's segment swaps and Suspense (a shared
+ * `layoutId` does not), so the pill slides instead of jumping.
+ */
+function NavItems({ className, compact = false }: { className?: string; compact?: boolean }) {
+  const pathname = usePathname();
+  const reduceMotion = useReducedMotion();
+  const navRef = useRef<HTMLElement>(null);
+  const [pill, setPill] = useState<PillRect | null>(null);
+  const pad = compact ? 'px-3 py-1' : 'px-3 py-1.5';
+
+  useEffect(() => {
+    const nav = navRef.current;
+    if (!nav) return;
+
+    const measure = () => {
+      const el = nav.querySelector<HTMLElement>('[data-nav-active="true"]');
+      const next: PillRect | null = el
+        ? { left: el.offsetLeft, top: el.offsetTop, width: el.offsetWidth, height: el.offsetHeight }
+        : null;
+      setPill((prev) =>
+        prev && next &&
+        prev.left === next.left && prev.top === next.top &&
+        prev.width === next.width && prev.height === next.height
+          ? prev
+          : next,
+      );
+    };
+
+    measure();
+    // Re-measure on font load / window resize / container reflow.
+    const ro = new ResizeObserver(measure);
+    ro.observe(nav);
+    return () => ro.disconnect();
+  }, [pathname]);
+
+  return (
+    <nav
+      ref={navRef}
+      aria-label="Primary"
+      className={cn('relative flex items-center gap-1', className)}
+    >
+      {pill && (
+        <motion.span
+          aria-hidden="true"
+          className="pointer-events-none absolute left-0 rounded-lg bg-primary/12"
+          style={{ top: pill.top, height: pill.height }}
+          initial={false}
+          animate={{ x: pill.left, width: pill.width }}
+          transition={
+            reduceMotion
+              ? { duration: 0.12, ease: 'easeOut' }
+              : { type: 'spring', stiffness: 480, damping: 40, mass: 0.6 }
+          }
+        />
+      )}
+
+      {navItems.map((item) => {
+        if (item.soon) {
+          return (
+            <span
+              key={item.href}
+              title="Coming soon"
+              className={cn(
+                'relative z-10 shrink-0 cursor-default rounded-lg text-sm font-medium text-muted-foreground/40',
+                pad,
+              )}
+            >
+              {item.label}
+            </span>
+          );
+        }
+
+        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+
+        return (
+          <Link
+            key={item.href}
+            href={item.href}
+            data-nav-active={active}
+            aria-current={active ? 'page' : undefined}
+            className={cn(
+              'relative z-10 shrink-0 rounded-lg text-sm font-medium transition-colors',
+              pad,
+              active ? 'text-primary' : 'text-muted-foreground hover:text-foreground',
+            )}
+          >
+            {item.label}
+          </Link>
+        );
+      })}
+    </nav>
+  );
+}
+
+// Routes that render their own full-screen layout, without the app nav.
+const bareRoutes = new Set(['/login', '/register']);
+
+/**
+ * The top navigation bar. Mounted once in the root layout so it survives every
+ * client navigation (that persistence is what lets the active-item pill slide).
+ * It hides itself on the auth screens and for logged-out visitors — `authed`
+ * comes from the server cookie so there's no first-paint flash; login/logout do
+ * a full document load, which refreshes it.
+ */
+export default function TopNav({ authed }: { authed: boolean }) {
   const pathname = usePathname();
   const router = useRouter();
   const { user, isAuthenticated, logout } = useAuth();
@@ -36,8 +146,7 @@ export default function TopNav() {
     return () => document.removeEventListener('pointerdown', onPointerDown);
   }, []);
 
-  const isActive = (item: (typeof navItems)[number]) =>
-    item.exact ? pathname === item.href : pathname.startsWith(item.href);
+  if (!authed || bareRoutes.has(pathname)) return null;
 
   const onSearch = (e: React.FormEvent) => {
     e.preventDefault();
@@ -64,33 +173,7 @@ export default function TopNav() {
         </Link>
 
         {/* Primary nav */}
-        <nav className="hidden items-center gap-1 sm:flex">
-          {navItems.map((item) =>
-            item.soon ? (
-              <span
-                key={item.href}
-                title="Coming soon"
-                className="cursor-default rounded-lg px-3 py-1.5 text-sm font-medium text-muted-foreground/40"
-              >
-                {item.label}
-              </span>
-            ) : (
-              <Link
-                key={item.href}
-                href={item.href}
-                aria-current={isActive(item) ? 'page' : undefined}
-                className={cn(
-                  'rounded-lg px-3 py-1.5 text-sm font-medium transition-colors',
-                  isActive(item)
-                    ? 'bg-primary/12 text-primary'
-                    : 'text-muted-foreground hover:bg-secondary/60 hover:text-foreground',
-                )}
-              >
-                {item.label}
-              </Link>
-            ),
-          )}
-        </nav>
+        <NavItems className="hidden sm:flex" />
 
         <div className="flex flex-1 items-center justify-end gap-2">
           {/* Search */}
@@ -149,28 +232,10 @@ export default function TopNav() {
       </div>
 
       {/* Mobile nav row */}
-      <nav className="flex items-center gap-1 overflow-x-auto border-t border-border px-4 py-1.5 sm:hidden">
-        {navItems.map((item) =>
-          item.soon ? (
-            <span key={item.href} className="rounded-lg px-3 py-1 text-sm text-muted-foreground/40">
-              {item.label}
-            </span>
-          ) : (
-            <Link
-              key={item.href}
-              href={item.href}
-              className={cn(
-                'shrink-0 rounded-lg px-3 py-1 text-sm font-medium transition-colors',
-                isActive(item)
-                  ? 'bg-primary/12 text-primary'
-                  : 'text-muted-foreground hover:text-foreground',
-              )}
-            >
-              {item.label}
-            </Link>
-          ),
-        )}
-      </nav>
+      <NavItems
+        className="overflow-x-auto border-t border-border px-4 py-1.5 sm:hidden"
+        compact
+      />
     </header>
   );
 }

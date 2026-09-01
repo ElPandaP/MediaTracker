@@ -1,8 +1,8 @@
 import { cookies } from 'next/headers';
-import AppShell from '@/components/layout/app-shell';
 import Landing from './_components/landing';
 import HomeView, { type HomeData } from './_components/home/home-view';
 import { getStats, getLibrary, getPendingReviews } from '@/lib/api/server';
+import { isJwtValid } from '@/lib/jwt';
 import type { GetLibraryResponse, GetStatsResponse, LibraryItem } from '@/lib/types';
 
 function decodeUsername(token: string): string {
@@ -22,8 +22,8 @@ const libData = (r: PromiseSettledResult<GetLibraryResponse>): LibraryItem[] =>
 export default async function RootPage() {
   const token = (await cookies()).get('tt-token')?.value;
 
-  // Logged-out (or expired — proxy.ts strips a dead cookie) visitors get the landing page.
-  if (!token) return <Landing />;
+  // Logged-out or expired visitors get the public landing page.
+  if (!token || !isJwtValid(token)) return <Landing />;
 
   const year = new Date().getFullYear();
   const [stats, books, movies, series, inProgress, pending, top] = await Promise.allSettled([
@@ -51,8 +51,8 @@ export default async function RootPage() {
   };
 
   return (
-    <AppShell>
+    <main className="mx-auto max-w-5xl px-4 py-6 lg:px-6 lg:py-8">
       <HomeView data={data} />
-    </AppShell>
+    </main>
   );
 }

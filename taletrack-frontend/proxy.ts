@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server';
 import type { NextRequest } from 'next/server';
+import { isJwtValid } from '@/lib/jwt';
 
 const protectedPrefixes = [
   '/dashboard', '/library', '/reviews', '/activity', '/profile',
@@ -7,25 +8,9 @@ const protectedPrefixes = [
 ];
 const authPrefixes = ['/login', '/register'];
 
-/**
- * Cheap client-side validity check: is the JWT well-formed and unexpired?
- * The backend still does real signature validation — this is only for routing
- * so an expired session lands on /login instead of an empty app.
- */
-function isTokenValid(token: string | undefined): boolean {
-  if (!token) return false;
-  try {
-    const seg = token.split('.')[1].replace(/-/g, '+').replace(/_/g, '/');
-    const payload = JSON.parse(atob(seg));
-    return typeof payload.exp === 'number' && payload.exp * 1000 > Date.now();
-  } catch {
-    return false;
-  }
-}
-
 export function proxy(request: NextRequest) {
   const rawToken = request.cookies.get('tt-token')?.value;
-  const authed = isTokenValid(rawToken);
+  const authed = isJwtValid(rawToken);
   const { pathname } = request.nextUrl;
 
   const isProtected = protectedPrefixes.some((p) => pathname === p || pathname.startsWith(p + '/'));
