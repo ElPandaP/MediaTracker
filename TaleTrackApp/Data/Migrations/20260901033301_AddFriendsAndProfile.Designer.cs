@@ -2,6 +2,7 @@
 using System;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 using TaleTrackApp.Data;
@@ -11,9 +12,11 @@ using TaleTrackApp.Data;
 namespace TaleTrackApp.Data.Migrations
 {
     [DbContext(typeof(AppDbContext))]
-    partial class AppDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260901033301_AddFriendsAndProfile")]
+    partial class AddFriendsAndProfile
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -218,22 +221,10 @@ namespace TaleTrackApp.Data.Migrations
                     b.Property<DateTime?>("RefreshTokenExpiry")
                         .HasColumnType("timestamp with time zone");
 
-                    b.Property<bool>("ShareBookProgress")
+                    b.Property<bool>("ShareProgressWithFriends")
                         .HasColumnType("boolean");
 
-                    b.Property<bool>("ShareBookReviews")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShareMovieProgress")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShareMovieReviews")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShareSeriesProgress")
-                        .HasColumnType("boolean");
-
-                    b.Property<bool>("ShareSeriesReviews")
+                    b.Property<bool>("ShareReviewsWithFriends")
                         .HasColumnType("boolean");
 
                     b.Property<DateTime?>("UpdatedAt")

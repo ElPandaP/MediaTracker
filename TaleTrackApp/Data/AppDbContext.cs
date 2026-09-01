@@ -9,6 +9,7 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
     public DbSet<Media> Medias { get; set; }
     public DbSet<Review> Reviews { get; set; }
     public DbSet<TrackingEvent> TrackingEvents { get; set; }
+    public DbSet<Friendship> Friendships { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
@@ -24,5 +25,21 @@ public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(op
             .HasOne(te => te.User)
             .WithMany(u => u.TrackingEvents)
             .OnDelete(DeleteBehavior.Cascade);
+
+        modelBuilder.Entity<Friendship>(f =>
+        {
+            f.HasOne(x => x.Requester)
+                .WithMany()
+                .HasForeignKey(x => x.RequesterId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            f.HasOne(x => x.Addressee)
+                .WithMany()
+                .HasForeignKey(x => x.AddresseeId)
+                .OnDelete(DeleteBehavior.Cascade);
+
+            // One row per ordered pair.
+            f.HasIndex(x => new { x.RequesterId, x.AddresseeId }).IsUnique();
+        });
     }
 }

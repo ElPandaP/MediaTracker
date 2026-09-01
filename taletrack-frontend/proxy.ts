@@ -3,8 +3,7 @@ import type { NextRequest } from 'next/server';
 import { isJwtValid } from '@/lib/jwt';
 
 const protectedPrefixes = [
-  '/dashboard', '/library', '/reviews', '/activity', '/profile', '/media',
-  '/books', '/movies', '/series', '/comics',
+  '/dashboard', '/library', '/reviews', '/activity', '/friends', '/profile', '/media', '/u',
 ];
 const authPrefixes = ['/login', '/register'];
 

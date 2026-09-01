@@ -10,7 +10,7 @@ public static class EditUserEndpoint
     {
         group.MapPut("/user/{id}", HandleAsync)
             .WithName("EditUser")
-            .WithDescription("Edita un usuario (requiere JWT + API Key interna)")
+            .WithDescription("Edit a user (requires JWT + internal API key)")
             .AddEndpointFilter<ValidationFilter>()
             .RequireAuthorization(Policies.UserPolicy)
             .RequireAuthorization(Policies.InternalOnly);
@@ -42,18 +42,24 @@ public static class EditUserEndpoint
 
         try
         {
-            var updatedUser = await userService.UpdateUserAsync(id, request.Username, request.Email, request.Password);
+            var privacy = request.Privacy == null ? null : new FeedPrivacy(
+                request.Privacy.BookProgress, request.Privacy.BookReviews,
+                request.Privacy.MovieProgress, request.Privacy.MovieReviews,
+                request.Privacy.SeriesProgress, request.Privacy.SeriesReviews);
+
+            var updatedUser = await userService.UpdateUserAsync(
+                id, request.Username, request.Email, request.Password, request.AvatarUrl, privacy);
             
             if (updatedUser == null)
             {
-                return Results.NotFound(new { success = false, message = "Usuario no encontrado" });
+                return Results.NotFound(new { success = false, message = "User not found." });
             }
 
             logger.LogInformation($"User {id} updated successfully");
             return Results.Ok(new 
             { 
                 success = true, 
-                message = "Usuario actualizado exitosamente",
+                message = "User updated successfully.",
                 data = new
                 {
                     id = updatedUser.Id,

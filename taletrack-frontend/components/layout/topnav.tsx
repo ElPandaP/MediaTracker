@@ -4,10 +4,11 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useEffect, useRef, useState } from 'react';
 import { motion, useReducedMotion } from 'framer-motion';
-import { Leaf, Search, User, LogOut } from 'lucide-react';
+import { Leaf, Search, User, LogOut, Users } from 'lucide-react';
 import { useAuth } from '@/lib/auth-context';
 import { useT } from '@/lib/i18n';
 import { cn } from '@/lib/utils';
+import { UserAvatar } from '@/components/media/user-avatar';
 import ThemeToggle from './theme-toggle';
 import LocaleToggle from './locale-toggle';
 
@@ -15,12 +16,8 @@ const navItems = [
   { href: '/', key: 'nav.home', exact: true },
   { href: '/library', key: 'nav.library' },
   { href: '/reviews', key: 'nav.reviews' },
-  { href: '/activity', key: 'nav.activity', soon: true },
+  { href: '/activity', key: 'nav.activity' },
 ];
-
-function initials(name: string) {
-  return name.split(/\s+/).map((w) => w[0]).join('').slice(0, 2).toUpperCase();
-}
 
 type PillRect = { left: number; top: number; width: number; height: number };
 
@@ -85,22 +82,8 @@ function NavItems({ className, compact = false }: { className?: string; compact?
       )}
 
       {navItems.map((item) => {
-        if (item.soon) {
-          return (
-            <span
-              key={item.href}
-              title={t('nav.comingSoon')}
-              className={cn(
-                'relative z-10 shrink-0 cursor-default rounded-lg text-sm font-medium text-muted-foreground/40',
-                pad,
-              )}
-            >
-              {t(item.key)}
-            </span>
-          );
-        }
-
-        const active = item.exact ? pathname === item.href : pathname.startsWith(item.href);
+        const exact = 'exact' in item && item.exact;
+        const active = exact ? pathname === item.href : pathname.startsWith(item.href);
 
         return (
           <Link
@@ -132,7 +115,13 @@ const bareRoutes = new Set(['/login', '/register']);
  * comes from the server cookie so there's no first-paint flash; login/logout do
  * a full document load, which refreshes it.
  */
-export default function TopNav({ authed }: { authed: boolean }) {
+export default function TopNav({
+  authed,
+  avatarUrl,
+}: {
+  authed: boolean;
+  avatarUrl?: string | null;
+}) {
   const pathname = usePathname();
   const router = useRouter();
   const t = useT();
@@ -203,10 +192,10 @@ export default function TopNav({ authed }: { authed: boolean }) {
           {isAuthenticated && (
             <details ref={menuRef} className="group relative">
               <summary
-                className="flex size-8 cursor-pointer list-none items-center justify-center rounded-full border border-primary/30 bg-primary/20 text-xs font-semibold text-primary select-none [&::-webkit-details-marker]:hidden"
+                className="flex cursor-pointer list-none items-center rounded-full select-none [&::-webkit-details-marker]:hidden"
                 aria-label={t('nav.accountMenu')}
               >
-                {initials(user?.username ?? 'U')}
+                <UserAvatar username={user?.username ?? 'U'} avatarUrl={avatarUrl} size="sm" />
               </summary>
               <div className="absolute right-0 mt-2 w-52 overflow-hidden rounded-xl border border-border bg-popover p-1 shadow-lg">
                 <div className="px-3 py-2">
@@ -214,6 +203,14 @@ export default function TopNav({ authed }: { authed: boolean }) {
                   <p className="truncate text-xs text-muted-foreground">{user?.email}</p>
                 </div>
                 <div className="my-1 h-px bg-border" />
+                <Link
+                  href="/friends"
+                  onClick={() => menuRef.current?.removeAttribute('open')}
+                  className="flex items-center gap-2 rounded-lg px-3 py-2 text-sm text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground"
+                >
+                  <Users aria-hidden="true" className="size-4" />
+                  {t('nav.friends')}
+                </Link>
                 <Link
                   href="/profile"
                   onClick={() => menuRef.current?.removeAttribute('open')}

@@ -8,6 +8,9 @@ using TaleTrackApp.Features.User.GoogleLogin;
 using TaleTrackApp.Features.User.EmailAuth;
 using TaleTrackApp.Features.User.EditUser;
 using TaleTrackApp.Features.User.DeleteUser;
+using TaleTrackApp.Features.User.GetMe;
+using TaleTrackApp.Features.User.SearchUsers;
+using TaleTrackApp.Features.User.GetUserProfile;
 using TaleTrackApp.Features.Media.AddMedia;
 using TaleTrackApp.Features.Media.GetMedia;
 using TaleTrackApp.Features.Media.GetMediaById;
@@ -27,6 +30,13 @@ using TaleTrackApp.Features.Stats;
 using TaleTrackApp.Features.Stats.GetStats;
 using TaleTrackApp.Features.Library;
 using TaleTrackApp.Features.Library.GetLibrary;
+using TaleTrackApp.Features.Friend;
+using TaleTrackApp.Features.Friend.GetFriends;
+using TaleTrackApp.Features.Friend.SendRequest;
+using TaleTrackApp.Features.Friend.RespondRequest;
+using TaleTrackApp.Features.Friend.RemoveFriend;
+using TaleTrackApp.Features.Activity;
+using TaleTrackApp.Features.Activity.GetActivity;
 using TaleTrackApp.Auth;
 
 // Load environment variables from .env
@@ -140,6 +150,8 @@ void configureApi()
     builder.Services.AddScoped<ReviewService>();
     builder.Services.AddScoped<StatsService>();
     builder.Services.AddScoped<LibraryService>();
+    builder.Services.AddScoped<FriendService>();
+    builder.Services.AddScoped<ActivityService>();
     builder.Services.AddHttpClient<OpenLibraryService>(client =>
     {
         client.Timeout = TimeSpan.FromSeconds(10);
@@ -209,7 +221,17 @@ void configurePipeline()
     GetReviewsEndpoint.Map(apiGroup);
     GetPendingReviewsEndpoint.Map(apiGroup);
     GetMediaByIdEndpoint.Map(apiGroup);
-    
+    GetMeEndpoint.Map(apiGroup);
+    SearchUsersEndpoint.Map(apiGroup);
+    GetUserProfileEndpoint.Map(apiGroup);
+
+    // Friends & activity (JWT)
+    GetFriendsEndpoint.Map(apiGroup);
+    SendFriendRequestEndpoint.Map(apiGroup);
+    RespondFriendRequestEndpoint.Map(apiGroup);
+    RemoveFriendEndpoint.Map(apiGroup);
+    GetActivityEndpoint.Map(apiGroup);
+
     // Internal API endpoints (API Key)
     GetMediaEndpoint.Map(apiGroup);
     

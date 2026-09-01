@@ -6,6 +6,12 @@ using System.Text;
 
 namespace TaleTrackApp.Features.User;
 
+/// <summary>Per-media-type feed privacy patch. Null = leave unchanged.</summary>
+public record FeedPrivacy(
+    bool? BookProgress = null, bool? BookReviews = null,
+    bool? MovieProgress = null, bool? MovieReviews = null,
+    bool? SeriesProgress = null, bool? SeriesReviews = null);
+
 public class UserService
 {
     private readonly AppDbContext _context;
@@ -20,6 +26,12 @@ public class UserService
     public async Task<Model.User?> GetByEmailAsync(string email)
     {
         return await _context.Users.FirstOrDefaultAsync(u => u.Email == email);
+    }
+
+    public async Task<Model.User?> GetByUsernameAsync(string username)
+    {
+        var u = username.Trim().ToLower();
+        return await _context.Users.FirstOrDefaultAsync(x => x.Username.ToLower() == u);
     }
 
     public async Task<Model.User?> GetByIdAsync(int id)
@@ -48,7 +60,13 @@ public class UserService
         return user;
     }
 
-    public async Task<Model.User?> UpdateUserAsync(int id, string? username, string? email, string? password)
+    public async Task<Model.User?> UpdateUserAsync(
+        int id,
+        string? username,
+        string? email,
+        string? password,
+        string? avatarUrl = null,
+        FeedPrivacy? privacy = null)
     {
         var user = await _context.Users.FindAsync(id);
         if (user == null)
@@ -69,6 +87,22 @@ public class UserService
         if (!string.IsNullOrEmpty(password))
         {
             user.PasswordHash = HashPassword(password);
+        }
+
+        // Empty string clears the avatar; null leaves it unchanged.
+        if (avatarUrl != null)
+        {
+            user.AvatarUrl = avatarUrl.Length == 0 ? null : avatarUrl;
+        }
+
+        if (privacy != null)
+        {
+            if (privacy.BookProgress.HasValue) user.ShareBookProgress = privacy.BookProgress.Value;
+            if (privacy.BookReviews.HasValue) user.ShareBookReviews = privacy.BookReviews.Value;
+            if (privacy.MovieProgress.HasValue) user.ShareMovieProgress = privacy.MovieProgress.Value;
+            if (privacy.MovieReviews.HasValue) user.ShareMovieReviews = privacy.MovieReviews.Value;
+            if (privacy.SeriesProgress.HasValue) user.ShareSeriesProgress = privacy.SeriesProgress.Value;
+            if (privacy.SeriesReviews.HasValue) user.ShareSeriesReviews = privacy.SeriesReviews.Value;
         }
 
         user.UpdatedAt = DateTime.UtcNow;

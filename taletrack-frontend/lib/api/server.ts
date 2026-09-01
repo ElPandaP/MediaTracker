@@ -1,3 +1,4 @@
+import { cache } from 'react';
 import { cookies } from 'next/headers';
 import { API_CONFIG } from './config';
 import type {
@@ -7,6 +8,10 @@ import type {
   GetLibraryResponse,
   GetReviewsResponse,
   GetMediaDetailResponse,
+  FriendsResponse,
+  ActivityResponse,
+  UserProfileResponse,
+  PublicProfileResponse,
 } from '../types';
 
 const SERVER_BASE_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:8080/api';
@@ -79,3 +84,27 @@ export async function getReviews(): Promise<GetReviewsResponse> {
 export async function getMediaDetail(id: number | string): Promise<GetMediaDetailResponse> {
   return serverFetch<GetMediaDetailResponse>(`/media/${id}`);
 }
+
+export async function getFriends(): Promise<FriendsResponse> {
+  return serverFetch<FriendsResponse>('/friends');
+}
+
+export async function getActivity(
+  scope: 'all' | 'mine' | 'friends' = 'all',
+  limit = 200,
+): Promise<ActivityResponse> {
+  return serverFetch<ActivityResponse>(`/activity?scope=${scope}&limit=${limit}`);
+}
+
+export async function getUserActivity(userId: number, limit = 100): Promise<ActivityResponse> {
+  return serverFetch<ActivityResponse>(`/activity?userId=${userId}&limit=${limit}`);
+}
+
+export async function getUserProfile(id: number | string): Promise<PublicProfileResponse> {
+  return serverFetch<PublicProfileResponse>(`/users/${id}`);
+}
+
+// Deduped per request — called by both the root layout and page components.
+export const getMe = cache((): Promise<UserProfileResponse> =>
+  serverFetch<UserProfileResponse>('/user/me'),
+);

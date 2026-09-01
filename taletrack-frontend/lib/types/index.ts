@@ -206,3 +206,93 @@ export interface GetMediaDetailResponse {
   success: boolean;
   data: MediaDetail;
 }
+
+// ─── Friends / Activity / Profile ────────────────────────────
+export interface Friend {
+  userId: number;
+  username: string;
+  avatarUrl?: string | null;
+}
+
+export interface FriendRequest {
+  requestId: number;
+  userId: number;
+  username: string;
+  avatarUrl?: string | null;
+  createdAt: string;
+}
+
+export interface FriendsResponse {
+  success: boolean;
+  friends: Friend[];
+  incoming: FriendRequest[];
+  outgoing: FriendRequest[];
+}
+
+export type UserRelationship = 'none' | 'self' | 'friends' | 'incoming' | 'outgoing';
+
+export interface UserSearchResponse {
+  success: boolean;
+  user: { userId: number; username: string; avatarUrl?: string | null } | null;
+  relationship?: UserRelationship;
+}
+
+export type ActivityKind = 'started' | 'finished' | 'reviewed';
+
+export interface ActivityItem {
+  id: string;
+  userId: number;
+  username: string;
+  avatarUrl?: string | null;
+  kind: ActivityKind;
+  date: string;
+  mediaId: number;
+  mediaTitle: string;
+  mediaType: LibraryType;
+  mediaPosterUrl?: string | null;
+  rating?: number | null;
+  comment?: string | null;
+}
+
+export interface ActivityResponse {
+  success: boolean;
+  count: number;
+  data: ActivityItem[];
+}
+
+export interface FeedPrivacy {
+  bookProgress: boolean;
+  bookReviews: boolean;
+  movieProgress: boolean;
+  movieReviews: boolean;
+  seriesProgress: boolean;
+  seriesReviews: boolean;
+}
+
+export interface UserProfile {
+  id: number;
+  username: string;
+  email: string;
+  avatarUrl?: string | null;
+  createdAt: string;
+  privacy: FeedPrivacy;
+}
+
+export interface UserProfileResponse {
+  success: boolean;
+  data: UserProfile;
+}
+
+export interface PublicProfile {
+  id: number;
+  username: string;
+  avatarUrl?: string | null;
+  createdAt: string;
+  relationship: UserRelationship;
+  counts: { book: number; movie: number; series: number; total: number };
+}
+
+export interface PublicProfileResponse {
+  success: boolean;
+  data: PublicProfile;
+}

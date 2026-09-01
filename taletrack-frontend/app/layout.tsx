@@ -6,6 +6,7 @@ import en from "@/messages/en.json";
 import es from "@/messages/es.json";
 import { Providers } from "./providers";
 import TopNav from "@/components/layout/topnav";
+import { getMe } from "@/lib/api/server";
 import { isJwtValid } from "@/lib/jwt";
 import { isLocale, localeFromHeader, type Locale } from "@/lib/i18n-shared";
 
@@ -47,12 +48,13 @@ export default async function RootLayout({
 }>) {
   const authed = isJwtValid((await cookies()).get("tt-token")?.value);
   const locale = await resolveLocale();
+  const avatarUrl = authed ? await getMe().then((r) => r.data.avatarUrl).catch(() => null) : null;
 
   return (
     <html lang={locale} suppressHydrationWarning>
       <body className={`${geistSans.variable} ${geistMono.variable} ${cormorant.variable} antialiased`}>
         <Providers locale={locale}>
-          <TopNav authed={authed} />
+          <TopNav authed={authed} avatarUrl={avatarUrl} />
           {children}
         </Providers>
       </body>

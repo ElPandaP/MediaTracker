@@ -13,6 +13,7 @@ import { TopOfYearCard } from './top-of-year-card';
 
 export interface HomeData {
   username: string;
+  avatarUrl: string | null;
   stats: YearlyStats | null;
   books: LibraryItem[];
   movies: LibraryItem[];
@@ -48,6 +49,7 @@ export default function HomeView({ data }: { data: HomeData }) {
         <aside className="flex flex-col gap-4">
           <ProfileCard
             username={data.username}
+            avatarUrl={data.avatarUrl}
             total={data.stats?.total ?? 0}
             reviewCount={data.stats?.reviewCount ?? 0}
           />

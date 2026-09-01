@@ -97,6 +97,22 @@ public class LibraryService
         return items.ToList();
     }
 
+    /// <summary>Distinct-media counts per type for a user (all time).</summary>
+    public async Task<(int Book, int Movie, int Series, int Total)> CountByTypeAsync(int userId)
+    {
+        var types = await _context.TrackingEvents
+            .Where(te => te.UserId == userId && te.Media != null)
+            .Select(te => new { te.MediaId, te.Media!.Type })
+            .Distinct()
+            .ToListAsync();
+
+        return (
+            types.Count(t => t.Type == "Book"),
+            types.Count(t => t.Type == "Movie"),
+            types.Count(t => t.Type == "Series"),
+            types.Count);
+    }
+
     /// <summary>Finished media the user has not reviewed yet.</summary>
     public async Task<List<LibraryItem>> GetPendingReviewsAsync(int userId)
     {

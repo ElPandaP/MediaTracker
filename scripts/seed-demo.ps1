@@ -137,7 +137,104 @@ foreach ($it in $items) {
     Write-Host ("   + {0,-38} {1,-7} {2}%" -f $it.title, $it.type, $it.progress)
 }
 
+# ─────────────────────────────────────────────────────────────────────────────
+#  Friends & test users
+# ─────────────────────────────────────────────────────────────────────────────
+Write-Host ""
+Write-Host "-> Seeding friends (alice, bob, carol) ..."
+
+$avatar = { param($seed) "https://api.dicebear.com/9.x/notionists/svg?seed=$seed" }
+$shareAll = @{
+    bookProgress = $true; bookReviews = $true
+    movieProgress = $true; movieReviews = $true
+    seriesProgress = $true; seriesReviews = $true
+}
+
+function New-SeedUser {
+    param([string]$Name, [string]$Mail, [string]$Seed, [array]$Titles)
+
+    try {
+        Invoke-RestMethod -Method Post -Uri "$ApiBase/register" `
+            -Headers @{ "X-Internal-Api-Key" = $internalKey } -ContentType "application/json" `
+            -Body (@{ email = $Mail; username = $Name; password = $Password } | ConvertTo-Json) | Out-Null
+    } catch {
+        if ("$($_.ErrorDetails.Message)" -notmatch "registrado") { throw }
+    }
+
+    $lg = Invoke-RestMethod -Method Post -Uri "$ApiBase/login" -ContentType "application/json" `
+        -Body (@{ email = $Mail; password = $Password } | ConvertTo-Json)
+    $h  = @{ Authorization = "Bearer $($lg.token)" }
+    $hk = @{ Authorization = "Bearer $($lg.token)"; "X-Internal-Api-Key" = $internalKey }
+    $me = Invoke-RestMethod -Uri "$ApiBase/user/me" -Headers $h
+
+    # avatar + share everything (per-media-type privacy: 3 types x {progress, reviews})
+    Invoke-RestMethod -Method Put -Uri "$ApiBase/user/$($me.data.id)" -Headers $hk -ContentType "application/json" `
+        -Body (@{ avatarUrl = (& $avatar $Seed); privacy = $shareAll } | ConvertTo-Json) | Out-Null
+
+    foreach ($ti in $Titles) {
+        $prog = if ($ti[2]) { [int]$ti[2] } else { 100 }
+        Invoke-RestMethod -Method Post -Uri "$ApiBase/tracking" -Headers $h -ContentType "application/json" `
+            -Body (@{ title = $ti[0]; type = $ti[1]; length = 300; progress = $prog } | ConvertTo-Json) | Out-Null
+    }
+
+    # review the finished ones
+    $lib = Invoke-RestMethod -Uri "$ApiBase/library?status=finished&limit=50" -Headers $h
+    $rated = 0
+    foreach ($item in $lib.data) {
+        if ($rated -ge 3) { break }
+        Invoke-RestMethod -Method Post -Uri "$ApiBase/review" -Headers $hk -ContentType "application/json" `
+            -Body (@{ mediaId = $item.mediaId; rating = (6, 7, 8, 9, 10 | Get-Random); comment = "Loved this one." } | ConvertTo-Json) | Out-Null
+        $rated++
+    }
+
+    Write-Host "   + @$Name  ($($Titles.Count) tracked, $rated reviewed)"
+    return $h
+}
+
+$aliceH = New-SeedUser -Name "alice" -Mail "alice@taletrack.dev" -Seed "Aneka" -Titles @(
+    @("The Left Hand of Darkness", "Book", 100), @("Piranesi", "Book", 100),
+    @("Dune", "Book", 60), @("Arrival", "Movie", 100), @("Severance", "Series", 100))
+
+$bobH = New-SeedUser -Name "bob" -Mail "bob@taletrack.dev" -Seed "Felix" -Titles @(
+    @("Project Hail Mary", "Book", 100), @("The Martian", "Book", 100),
+    @("Blade Runner 2049", "Movie", 100), @("Foundation", "Series", 45), @("Neuromancer", "Book", 100))
+
+$carolH = New-SeedUser -Name "carol" -Mail "carol@taletrack.dev" -Seed "Luna" -Titles @(
+    @("Circe", "Book", 100), @("The Song of Achilles", "Book", 100), @("The Bear", "Series", 80))
+
+function Send-FriendReq {
+    param($FromHeaders, [string]$ToUsername)
+    try {
+        $found = Invoke-RestMethod -Uri "$ApiBase/users/search?username=$ToUsername" -Headers $FromHeaders
+        if (-not $found.user) { return }
+        Invoke-RestMethod -Method Post -Uri "$ApiBase/friends/requests" -Headers $FromHeaders `
+            -ContentType "application/json" -Body (@{ userId = $found.user.userId } | ConvertTo-Json) | Out-Null
+    } catch { }  # already pending / already friends -> ignore
+}
+function Accept-FriendReq {
+    param($AsHeaders, [string]$FromUsername)
+    $f = Invoke-RestMethod -Uri "$ApiBase/friends" -Headers $AsHeaders
+    $req = $f.incoming | Where-Object { $_.username -eq $FromUsername } | Select-Object -First 1
+    if ($req) {
+        Invoke-RestMethod -Method Post -Uri "$ApiBase/friends/requests/$($req.requestId)" -Headers $AsHeaders `
+            -ContentType "application/json" -Body (@{ accept = $true } | ConvertTo-Json) | Out-Null
+    }
+}
+
+# demo <-> alice (accepted), bob -> demo (accepted), carol -> demo (still pending)
+Send-FriendReq $auth   "alice";  Accept-FriendReq $aliceH "demo"
+Send-FriendReq $bobH   "demo";   Accept-FriendReq $auth   "bob"
+Send-FriendReq $aliceH "bob";    Accept-FriendReq $bobH   "alice"
+Send-FriendReq $carolH "demo"    # left pending on purpose
+Write-Host "   friendships: demo<->alice, demo<->bob, alice<->bob  |  carol->demo pending"
+
+# demo: avatar + share everything (the migration defaulted existing rows to off)
+$demoMe = Invoke-RestMethod -Uri "$ApiBase/user/me" -Headers $auth
+Invoke-RestMethod -Method Put -Uri "$ApiBase/user/$($demoMe.data.id)" `
+    -Headers @{ Authorization = "Bearer $($login.token)"; "X-Internal-Api-Key" = $internalKey } `
+    -ContentType "application/json" `
+    -Body (@{ avatarUrl = (& $avatar "Milo"); privacy = $shareAll } | ConvertTo-Json) | Out-Null
+
 Write-Host ""
 Write-Host "Done. Open http://localhost:8090/login"
-Write-Host "  email:    $Email"
-Write-Host "  password: $Password"
+Write-Host "  demo / alice / bob / carol   —  password: $Password"

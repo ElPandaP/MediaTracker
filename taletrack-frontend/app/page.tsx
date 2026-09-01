@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import Landing from './_components/landing';
 import HomeView, { type HomeData } from './_components/home/home-view';
-import { getStats, getLibrary, getPendingReviews } from '@/lib/api/server';
+import { getStats, getLibrary, getPendingReviews, getMe } from '@/lib/api/server';
 import { isJwtValid } from '@/lib/jwt';
 import type { GetLibraryResponse, GetStatsResponse, LibraryItem } from '@/lib/types';
 
@@ -32,7 +32,8 @@ export default async function RootPage() {
   if (!token || !isJwtValid(token)) return <Landing />;
 
   const year = new Date().getFullYear();
-  const [stats, books, movies, series, inProgress, pending, top] = await Promise.allSettled([
+  const [me, stats, books, movies, series, inProgress, pending, top] = await Promise.allSettled([
+    getMe(),
     getStats(),
     getLibrary({ type: 'Book', limit: CAROUSEL_LIMIT }),
     getLibrary({ type: 'Movie', limit: CAROUSEL_LIMIT }),
@@ -43,7 +44,9 @@ export default async function RootPage() {
   ]);
 
   const data: HomeData = {
-    username: decodeUsername(token),
+    username:
+      me.status === 'fulfilled' ? me.value.data.username : decodeUsername(token),
+    avatarUrl: me.status === 'fulfilled' ? me.value.data.avatarUrl ?? null : null,
     stats:
       stats.status === 'fulfilled'
         ? (stats.value as GetStatsResponse).data

@@ -19,6 +19,17 @@ public class User
     [StringLength(512, ErrorMessage = "Password hash cannot exceed 512 characters")]
     public string? PasswordHash { get; set; }
 
+    [StringLength(2048)]
+    public string? AvatarUrl { get; set; }
+
+    // Per-media-type feed privacy: what a friend sees of your activity.
+    public bool ShareBookProgress { get; set; } = true;
+    public bool ShareBookReviews { get; set; } = true;
+    public bool ShareMovieProgress { get; set; } = true;
+    public bool ShareMovieReviews { get; set; } = true;
+    public bool ShareSeriesProgress { get; set; } = true;
+    public bool ShareSeriesReviews { get; set; } = true;
+
     [StringLength(255, ErrorMessage = "Google ID cannot exceed 255 characters")]
     public string? GoogleId { get; set; }
 

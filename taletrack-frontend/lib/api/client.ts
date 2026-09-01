@@ -1,5 +1,18 @@
 import { API_CONFIG } from './config';
 
+/** Error thrown for a failed request. `code` is a backend-supplied stable key
+ *  (when present) that the UI can map to a localized message. */
+export class ApiError extends Error {
+  status: number;
+  code?: string;
+  constructor(message: string, status: number, code?: string) {
+    super(message);
+    this.name = 'ApiError';
+    this.status = status;
+    this.code = code;
+  }
+}
+
 export class ApiClient {
   private baseURL: string;
   private internalApiKey: string;
@@ -70,11 +83,13 @@ export class ApiClient {
       if (expectedCodes.includes(status)) {
         const body = await response.text();
         let message = 'Request failed.';
+        let code: string | undefined;
         try {
           const json = JSON.parse(body);
           message = json.message ?? json.error ?? json.title ?? message;
+          code = typeof json.code === 'string' ? json.code : undefined;
         } catch { /* use default */ }
-        throw new Error(message);
+        throw new ApiError(message, status, code);
       }
 
       let reason = 'Something went wrong';

@@ -48,7 +48,7 @@ TaleTrackApp/
 │   └── EmailService.cs        # manda códigos OTP vía API de Resend (https://api.resend.com/emails)
 ├── Data/
 │   ├── AppDbContext.cs        # 4 DbSet: Users, Medias, Reviews, TrackingEvents (+ cascade delete)
-│   └── Migrations/            # 7 migraciones, generadas por EF
+│   └── Migrations/            # 9 migraciones, generadas por EF
 ├── Model/                     # entidades EF: User, Media, Review, TrackingEvent
 ├── Features/
 │   ├── User/  Media/  TrackingEvent/  Review/
@@ -115,7 +115,8 @@ Varios endpoints encadenan `.RequireAuthorization(UserPolicy).RequireAuthorizati
 | POST | `/auth/request-code` | anónimo | envía OTP al email (respuesta genérica, no filtra si existe) |
 | POST | `/auth/verify-code` | anónimo | valida OTP → JWT |
 | POST | `/register` | **InternalOnly** | crea usuario (email, username, password ≥6) |
-| PUT | `/user/{id}` | JWT + Internal | edita username/email/password; solo uno mismo (`userId == id` o 403) |
+| PUT | `/user/{id}` | JWT + Internal | edita username/email/password/avatarUrl + `privacy{bookProgress,bookReviews,movieProgress,movieReviews,seriesProgress,seriesReviews}`; solo uno mismo (`userId == id` o 403) |
+| GET | `/users/{id}` | JWT | perfil público: `{ id, username, avatarUrl, createdAt, relationship, counts{book,movie,series,total} }` |
 | DELETE | `/user/{id}` | JWT + Internal | borra la cuenta; solo uno mismo. Cascade borra Reviews + TrackingEvents |
 
 ### Media
@@ -140,6 +141,18 @@ Varios endpoints encadenan `.RequireAuthorization(UserPolicy).RequireAuthorizati
 | GET | `/reviews` | JWT | reseñas escritas por el usuario, con `media` anidado |
 | GET | `/reviews/pending` | JWT | media terminada (progreso 100) que el usuario aún no ha reseñado |
 
+### Friends & Activity  (`Features/Friend/`, `Features/Activity/` — todo JWT)
+| Método | Ruta | Qué hace |
+|---|---|---|
+| GET | `/friends` | `{ friends, incoming, outgoing }` (amigos aceptados + solicitudes) |
+| POST | `/friends/requests` `{userId}` | envía solicitud a ese usuario |
+| POST | `/friends/requests/{id}` `{accept}` | acepta / rechaza una entrante |
+| DELETE | `/friends/{userId}` | elimina amistad o cancela solicitud |
+| GET | `/users/search?username=` | busca usuario por username (quita `@` inicial) → `{ user, relationship }` |
+| GET | `/activity?scope=all\|mine\|friends&limit=` | feed derivado de TrackingEvent + Review: `started`/`finished`/`reviewed`. Filtra por la privacidad **por tipo de media** de cada usuario (`Share{Book,Movie,Series}{Progress,Reviews}`) |
+| GET | `/activity?userId=N&limit=` | actividad de un solo usuario (para su perfil público); vacío salvo que seas tú o su amigo |
+| GET | `/user/me` | perfil completo (avatar, privacidad) del usuario autenticado |
+
 ### Review
 | Método | Ruta | Auth | Qué hace |
 |---|---|---|---|
@@ -159,6 +172,8 @@ Varios endpoints encadenan `.RequireAuthorization(UserPolicy).RequireAuthorizati
 | **Media** | Title, Type, Length, Description?, PosterUrl?, Author?, Isbn?, FirstTrackedAt, UpdatedAt? | `Type` regex `^(Movie|Series|Book)$` |
 | **TrackingEvent** | UserId→, MediaId→, Progress? (0–100), EventDate | `EventDate` = `DateTime.UtcNow` al crear (no se puede backdatear por API) |
 | **Review** | UserId→, MediaId→, Rating (1–10), Comment?, CreatedAt, UpdatedAt? | |
+| **Friendship** | RequesterId→, AddresseeId→, Status ("Pending"/"Accepted"), CreatedAt, RespondedAt? | índice único en (Requester, Addressee); ambos FK cascade-delete |
+| **User** (nuevos) | AvatarUrl?, y 6 flags de privacidad `Share{Book,Movie,Series}{Progress,Reviews}` (bool, def. true) | migr. `AddFriendsAndProfile` (avatar + 2 flags) → `PerTypeFeedPrivacy` (renombra a `ShareSeries*` + añade 4 columnas) |
 
 - **Cascade delete** configurado en `OnModelCreating`: borrar un `User` borra sus `Review` y `TrackingEvent`.
 - **Dedup de Media** (`MediaService.FindOrCreateAsync`): prioridad ISBN → Title+Author → Title solo (siempre dentro del mismo `Type`).
