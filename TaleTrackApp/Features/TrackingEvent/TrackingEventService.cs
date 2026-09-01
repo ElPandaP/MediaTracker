@@ -40,6 +40,14 @@ public class TrackingEventService
             .ToListAsync();
     }
 
+    public async Task<Model.TrackingEvent?> GetLatestForMediaAsync(int userId, int mediaId)
+    {
+        return await _context.TrackingEvents
+            .Where(te => te.UserId == userId && te.MediaId == mediaId)
+            .OrderByDescending(te => te.EventDate)
+            .FirstOrDefaultAsync();
+    }
+
     public async Task<List<Model.TrackingEvent>> GetByUserIdWithFiltersAsync(
         int userId,
         string? mediaType = null,

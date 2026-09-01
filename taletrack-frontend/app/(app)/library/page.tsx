@@ -6,7 +6,8 @@ import LibraryClient from './LibraryClient';
 export default async function LibraryPage() {
   let items: LibraryItem[] = [];
   try {
-    const res = await getLibrary({ limit: 200 });
+    // No limit — the whole library loads and LibraryClient paginates it.
+    const res = await getLibrary();
     items = res.data ?? [];
   } catch {
     // empty state handled in the client

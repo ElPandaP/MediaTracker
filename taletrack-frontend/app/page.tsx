@@ -5,6 +5,10 @@ import { getStats, getLibrary, getPendingReviews } from '@/lib/api/server';
 import { isJwtValid } from '@/lib/jwt';
 import type { GetLibraryResponse, GetStatsResponse, LibraryItem } from '@/lib/types';
 
+// How many covers a type carousel loads before "see all" takes over.
+const CAROUSEL_LIMIT = 50;
+const IN_PROGRESS_LIMIT = 12;
+
 function decodeUsername(token: string): string {
   try {
     const payload = JSON.parse(
@@ -16,8 +20,10 @@ function decodeUsername(token: string): string {
   }
 }
 
-const libData = (r: PromiseSettledResult<GetLibraryResponse>): LibraryItem[] =>
-  r.status === 'fulfilled' ? (r.value.data ?? []) : [];
+type LibRes = PromiseSettledResult<GetLibraryResponse>;
+const libData = (r: LibRes): LibraryItem[] => (r.status === 'fulfilled' ? (r.value.data ?? []) : []);
+const libTotal = (r: LibRes): number =>
+  r.status === 'fulfilled' ? (r.value.total ?? r.value.data?.length ?? 0) : 0;
 
 export default async function RootPage() {
   const token = (await cookies()).get('tt-token')?.value;
@@ -28,10 +34,10 @@ export default async function RootPage() {
   const year = new Date().getFullYear();
   const [stats, books, movies, series, inProgress, pending, top] = await Promise.allSettled([
     getStats(),
-    getLibrary({ type: 'Book', limit: 24 }),
-    getLibrary({ type: 'Movie', limit: 24 }),
-    getLibrary({ type: 'Series', limit: 24 }),
-    getLibrary({ status: 'in_progress', limit: 6 }),
+    getLibrary({ type: 'Book', limit: CAROUSEL_LIMIT }),
+    getLibrary({ type: 'Movie', limit: CAROUSEL_LIMIT }),
+    getLibrary({ type: 'Series', limit: CAROUSEL_LIMIT }),
+    getLibrary({ status: 'in_progress', limit: IN_PROGRESS_LIMIT }),
     getPendingReviews(),
     getLibrary({ sort: 'rating', year, limit: 3 }),
   ]);
@@ -45,13 +51,14 @@ export default async function RootPage() {
     books: libData(books),
     movies: libData(movies),
     series: libData(series),
+    totals: { Book: libTotal(books), Movie: libTotal(movies), Series: libTotal(series) },
     inProgress: libData(inProgress),
     pending: libData(pending),
     topOfYear: libData(top),
   };
 
   return (
-    <main className="mx-auto max-w-5xl px-4 py-6 lg:px-6 lg:py-8">
+    <main className="mx-auto max-w-6xl px-4 py-6 lg:px-6 lg:py-8">
       <HomeView data={data} />
     </main>
   );

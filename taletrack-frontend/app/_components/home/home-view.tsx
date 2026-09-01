@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { ReviewModal, type ReviewTarget } from '@/components/media/review-modal';
-import type { LibraryItem, YearlyStats } from '@/lib/types';
+import type { LibraryItem, LibraryType, YearlyStats } from '@/lib/types';
 import { ProfileCard } from './profile-card';
 import { MonthlyStatsCard } from './monthly-stats-card';
 import { TypeCarousel } from './type-carousel';
@@ -16,6 +16,7 @@ export interface HomeData {
   books: LibraryItem[];
   movies: LibraryItem[];
   series: LibraryItem[];
+  totals: Record<LibraryType, number>;
   inProgress: LibraryItem[];
   pending: LibraryItem[];
   topOfYear: LibraryItem[];
@@ -32,11 +33,11 @@ export default function HomeView({ data }: { data: HomeData }) {
 
   return (
     <>
-      <h1 className="mb-6 font-heading text-2xl font-semibold">
+      <h1 className="mb-6 font-heading text-3xl font-semibold">
         Hi, <span className="text-primary italic">{data.username}</span>
       </h1>
 
-      <div className="grid gap-5 lg:grid-cols-[220px_minmax(0,1fr)] xl:grid-cols-[220px_minmax(0,1fr)_216px]">
+      <div className="grid gap-6 lg:grid-cols-[240px_minmax(0,1fr)] xl:grid-cols-[240px_minmax(0,1fr)_280px]">
         {/* Left: identity + stats */}
         <aside className="flex flex-col gap-4">
           <ProfileCard
@@ -48,10 +49,10 @@ export default function HomeView({ data }: { data: HomeData }) {
         </aside>
 
         {/* Center: carousels by type */}
-        <div className="flex min-w-0 flex-col gap-6">
-          <TypeCarousel type="Book" items={data.books} />
-          <TypeCarousel type="Movie" items={data.movies} />
-          <TypeCarousel type="Series" items={data.series} />
+        <div className="flex min-w-0 flex-col gap-7">
+          <TypeCarousel type="Book" items={data.books} total={data.totals.Book} />
+          <TypeCarousel type="Movie" items={data.movies} total={data.totals.Movie} />
+          <TypeCarousel type="Series" items={data.series} total={data.totals.Series} />
         </div>
 
         {/* Right: quick access (wraps below on small screens) */}

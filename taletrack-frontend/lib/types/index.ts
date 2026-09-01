@@ -129,6 +129,8 @@ export interface LibraryItem {
 export interface GetLibraryResponse {
   success: boolean;
   count: number;
+  /** Total matching items before any limit — for "50 · see all" style counts. */
+  total?: number;
   data: LibraryItem[];
 }
 
@@ -170,4 +172,37 @@ export interface GetReviewsResponse {
 export interface EditReviewRequest {
   rating: number;
   comment?: string;
+}
+
+export interface MediaDetailReview {
+  id: number;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  username?: string | null;
+  mine: boolean;
+}
+
+export interface MediaDetail {
+  id: number;
+  title: string;
+  type: LibraryType;
+  author?: string | null;
+  posterUrl?: string | null;
+  length: number;
+  isbn?: string | null;
+  description?: string | null;
+  avgRating?: number | null;
+  reviewCount: number;
+  myProgress?: number | null;
+  myLastEventDate?: string | null;
+  myReviewId?: number | null;
+  myRating?: number | null;
+  myComment?: string | null;
+  reviews: MediaDetailReview[];
+}
+
+export interface GetMediaDetailResponse {
+  success: boolean;
+  data: MediaDetail;
 }

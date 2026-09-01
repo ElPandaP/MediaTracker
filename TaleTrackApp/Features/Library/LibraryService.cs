@@ -37,8 +37,7 @@ public class LibraryService
         string? type = null,
         string? status = null,
         string? sort = null,
-        int? year = null,
-        int? limit = null)
+        int? year = null)
     {
         var events = await _context.TrackingEvents
             .Where(te => te.UserId == userId)
@@ -94,9 +93,6 @@ public class LibraryService
             "rating" => items.OrderByDescending(i => i.MyRating ?? -1).ThenByDescending(i => i.LastEventDate),
             _        => items.OrderByDescending(i => i.LastEventDate),
         };
-
-        if (limit is int l && l > 0)
-            items = items.Take(l);
 
         return items.ToList();
     }

@@ -1,8 +1,9 @@
 'use client';
 
-import { useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import Link from 'next/link';
-import { ChevronLeft, ChevronRight } from 'lucide-react';
+import useEmblaCarousel from 'embla-carousel-react';
+import { ChevronLeft, ChevronRight, ArrowRight } from 'lucide-react';
 import { Cover, typeMeta } from '@/components/media/cover';
 import { StarRating, toStars } from '@/components/media/star-rating';
 import type { LibraryItem, LibraryType } from '@/lib/types';
@@ -10,32 +11,54 @@ import type { LibraryItem, LibraryType } from '@/lib/types';
 export function TypeCarousel({
   type,
   items,
+  total,
 }: {
   type: LibraryType;
   items: LibraryItem[];
+  total?: number;
 }) {
   const meta = typeMeta[type];
-  const trackRef = useRef<HTMLDivElement>(null);
-  const [atStart, setAtStart] = useState(true);
-  const [atEnd, setAtEnd] = useState(false);
+  const count = total ?? items.length;
+  const [emblaRef, emblaApi] = useEmblaCarousel({
+    dragFree: true,
+    align: 'start',
+    containScroll: 'trimSnaps',
+  });
+  const [canPrev, setCanPrev] = useState(false);
+  const [canNext, setCanNext] = useState(false);
+  const downX = useRef(0);
 
-  const updateEdges = () => {
-    const el = trackRef.current;
-    if (!el) return;
-    setAtStart(el.scrollLeft <= 4);
-    setAtEnd(el.scrollLeft + el.clientWidth >= el.scrollWidth - 4);
+  const sync = useCallback(() => {
+    if (!emblaApi) return;
+    setCanPrev(emblaApi.canScrollPrev());
+    setCanNext(emblaApi.canScrollNext());
+  }, [emblaApi]);
+
+  useEffect(() => {
+    if (!emblaApi) return;
+    const raf = requestAnimationFrame(sync); // initial button state, off the effect body
+    emblaApi.on('select', sync).on('reInit', sync);
+    return () => {
+      cancelAnimationFrame(raf);
+      emblaApi.off('select', sync).off('reInit', sync);
+    };
+  }, [emblaApi, sync]);
+
+  // A drag that ends over a slide shouldn't navigate.
+  const onPointerDown = (e: React.PointerEvent) => {
+    downX.current = e.clientX;
   };
-
-  const scrollByPage = (dir: 1 | -1) => {
-    const el = trackRef.current;
-    if (!el) return;
-    el.scrollBy({ left: dir * el.clientWidth * 0.9, behavior: 'smooth' });
+  const onClickCapture = (e: React.MouseEvent) => {
+    if (Math.abs(e.clientX - downX.current) > 8) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
   };
 
   return (
     <section aria-labelledby={`carousel-${type}`}>
       <div className="mb-3 flex items-baseline justify-between gap-2">
-        <h2 id={`carousel-${type}`} className="font-heading text-lg font-semibold">
+        <h2 id={`carousel-${type}`} className="font-heading text-xl font-semibold">
           {meta.plural}
         </h2>
         <div className="flex items-center gap-2">
@@ -43,26 +66,26 @@ export function TypeCarousel({
             href={`/library?type=${type}`}
             className="text-xs text-muted-foreground transition-colors hover:text-foreground"
           >
-            {items.length} · see all →
+            {count} · see all →
           </Link>
           <div className="flex gap-1">
             <button
               type="button"
-              onClick={() => scrollByPage(-1)}
-              disabled={atStart}
+              onClick={() => emblaApi?.scrollPrev()}
+              disabled={!canPrev}
               aria-label={`${meta.plural}: previous`}
-              className="flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <ChevronLeft aria-hidden="true" className="size-3.5" />
+              <ChevronLeft aria-hidden="true" className="size-4" />
             </button>
             <button
               type="button"
-              onClick={() => scrollByPage(1)}
-              disabled={atEnd}
+              onClick={() => emblaApi?.scrollNext()}
+              disabled={!canNext}
               aria-label={`${meta.plural}: next`}
-              className="flex size-6 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
+              className="flex size-7 items-center justify-center rounded-full border border-border text-muted-foreground transition-colors hover:bg-secondary hover:text-foreground disabled:opacity-30 disabled:hover:bg-transparent"
             >
-              <ChevronRight aria-hidden="true" className="size-3.5" />
+              <ChevronRight aria-hidden="true" className="size-4" />
             </button>
           </div>
         </div>
@@ -74,26 +97,48 @@ export function TypeCarousel({
         </p>
       ) : (
         <div
-          ref={trackRef}
-          onScroll={updateEdges}
-          className="scrollbar-hide flex snap-x snap-mandatory gap-3 overflow-x-auto pb-1"
+          className="cursor-grab overflow-hidden active:cursor-grabbing"
+          ref={emblaRef}
+          onPointerDownCapture={onPointerDown}
+          onClickCapture={onClickCapture}
         >
-          {items.map((item) => (
-            <figure key={item.mediaId} className="w-[92px] shrink-0 snap-start">
-              <Cover
-                title={item.title}
-                type={item.type}
-                posterUrl={item.posterUrl}
-                sizes="92px"
-              />
-              <figcaption className="mt-1.5">
-                <p className="line-clamp-2 text-xs leading-tight text-foreground">{item.title}</p>
-                {item.myRating != null && (
-                  <StarRating stars={toStars(item.myRating)} className="mt-0.5" />
-                )}
-              </figcaption>
-            </figure>
-          ))}
+          <div className="flex gap-3">
+            {items.map((item) => (
+              <figure key={item.mediaId} className="shrink-0 grow-0 basis-[7.5rem]">
+                <Link href={`/media/${item.mediaId}`} draggable={false} className="group block">
+                  <Cover
+                    title={item.title}
+                    type={item.type}
+                    posterUrl={item.posterUrl}
+                    sizes="128px"
+                    className="transition group-hover:shadow-md group-hover:brightness-[1.03]"
+                  />
+                  <figcaption className="mt-1.5">
+                    <p className="line-clamp-2 text-xs leading-tight text-foreground group-hover:text-primary">
+                      {item.title}
+                    </p>
+                    {item.myRating != null && (
+                      <StarRating stars={toStars(item.myRating)} className="mt-0.5" />
+                    )}
+                  </figcaption>
+                </Link>
+              </figure>
+            ))}
+
+            {count > items.length && (
+              <figure className="shrink-0 grow-0 basis-[7.5rem]">
+                <Link
+                  href={`/library?type=${type}`}
+                  draggable={false}
+                  className="group flex aspect-2/3 flex-col items-center justify-center gap-1.5 rounded-xl border-2 border-dashed border-border text-muted-foreground transition-colors hover:border-primary/40 hover:bg-primary/5 hover:text-primary"
+                >
+                  <ArrowRight aria-hidden="true" className="size-5" />
+                  <span className="text-xs font-medium">See all</span>
+                  <span className="text-[11px] opacity-70">{count}</span>
+                </Link>
+              </figure>
+            )}
+          </div>
         </div>
       )}
     </section>

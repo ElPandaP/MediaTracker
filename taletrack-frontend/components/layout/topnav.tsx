@@ -163,7 +163,7 @@ export default function TopNav({ authed }: { authed: boolean }) {
 
   return (
     <header className="sticky top-0 z-30 border-b border-border bg-card/80 backdrop-blur-md">
-      <div className="mx-auto flex h-14 max-w-5xl items-center gap-4 px-4 lg:px-6">
+      <div className="mx-auto flex h-16 max-w-6xl items-center gap-4 px-4 lg:px-6">
         {/* Brand */}
         <Link href="/" className="flex shrink-0 items-center gap-2">
           <span className="flex size-7 items-center justify-center rounded-lg border border-primary/25 bg-primary/15">

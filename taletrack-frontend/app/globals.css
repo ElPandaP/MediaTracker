@@ -128,6 +128,9 @@
   }
   html {
     @apply font-sans;
+    /* Master UI scale. Tailwind sizing/spacing is rem-based, so this zooms the
+       whole app. Bump toward 125% if you want it bigger, back to 100% for stock. */
+    font-size: 112.5%;
   }
   h1, h2, h3, h4 {
     font-family: var(--font-cormorant), Georgia, serif;

@@ -6,6 +6,7 @@ import type {
   GetStatsResponse,
   GetLibraryResponse,
   GetReviewsResponse,
+  GetMediaDetailResponse,
 } from '../types';
 
 const SERVER_BASE_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:8080/api';
@@ -73,4 +74,8 @@ export async function getPendingReviews(): Promise<GetLibraryResponse> {
 
 export async function getReviews(): Promise<GetReviewsResponse> {
   return serverFetch<GetReviewsResponse>('/reviews');
+}
+
+export async function getMediaDetail(id: number | string): Promise<GetMediaDetailResponse> {
+  return serverFetch<GetMediaDetailResponse>(`/media/${id}`);
 }

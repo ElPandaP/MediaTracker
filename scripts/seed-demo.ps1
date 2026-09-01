@@ -4,6 +4,8 @@
 # Prereq: dev stack running ->  docker compose -f docker-compose.dev.yml up -d
 # Then:                          ./scripts/seed-demo.ps1
 # Log in at http://localhost:8090/login with the credentials printed at the end.
+# Seeds ~65 books (so the carousel's 50-item cap + "see all" is visible), 3 movies, 3 series.
+# Idempotent-ish: re-running adds more tracking events but media dedupes by title.
 
 [CmdletBinding()]
 param(
@@ -54,6 +56,79 @@ $items = @(
     @{ title = "The Bear";                          type = "Series"; length = 10;  progress = 70  }
     @{ title = "Shogun";                            type = "Series"; length = 10;  progress = 30  }
 )
+
+# A bigger book catalog so the carousel's 50-item cap is visible ("50 · see all").
+# No ISBN -> these render the typed placeholder tile (fine for a demo).
+$bookCatalog = @'
+The Fellowship of the Ring;J.R.R. Tolkien;423
+The Two Towers;J.R.R. Tolkien;352
+The Return of the King;J.R.R. Tolkien;416
+A Game of Thrones;George R.R. Martin;694
+A Clash of Kings;George R.R. Martin;768
+The Way of Kings;Brandon Sanderson;1007
+Mistborn: The Final Empire;Brandon Sanderson;541
+The Fifth Season;N.K. Jemisin;468
+A Wizard of Earthsea;Ursula K. Le Guin;205
+The Left Hand of Darkness;Ursula K. Le Guin;304
+Neuromancer;William Gibson;271
+Snow Crash;Neal Stephenson;468
+The Three-Body Problem;Liu Cixin;400
+Foundation;Isaac Asimov;244
+I, Robot;Isaac Asimov;224
+Do Androids Dream of Electric Sheep?;Philip K. Dick;210
+Hyperion;Dan Simmons;482
+Ender's Game;Orson Scott Card;324
+The Dispossessed;Ursula K. Le Guin;341
+Rendezvous with Rama;Arthur C. Clarke;256
+2001: A Space Odyssey;Arthur C. Clarke;297
+Ringworld;Larry Niven;342
+The Forever War;Joe Haldeman;278
+A Canticle for Leibowitz;Walter M. Miller Jr.;320
+Solaris;Stanislaw Lem;204
+Roadside Picnic;Arkady and Boris Strugatsky;209
+The Stars My Destination;Alfred Bester;258
+Childhood's End;Arthur C. Clarke;224
+The Martian;Andy Weir;369
+Recursion;Blake Crouch;336
+Dark Matter;Blake Crouch;342
+Station Eleven;Emily St. John Mandel;333
+The Road;Cormac McCarthy;287
+Never Let Me Go;Kazuo Ishiguro;288
+The Remains of the Day;Kazuo Ishiguro;258
+Cloud Atlas;David Mitchell;509
+The Night Circus;Erin Morgenstern;387
+Jonathan Strange & Mr Norrell;Susanna Clarke;782
+The Priory of the Orange Tree;Samantha Shannon;830
+Circe;Madeline Miller;393
+The Song of Achilles;Madeline Miller;352
+Gideon the Ninth;Tamsyn Muir;448
+The Poppy War;R.F. Kuang;545
+Babel;R.F. Kuang;546
+The City & the City;China Mieville;312
+Perdido Street Station;China Mieville;710
+American Gods;Neil Gaiman;465
+The Ocean at the End of the Lane;Neil Gaiman;181
+Good Omens;Neil Gaiman and Terry Pratchett;288
+Small Gods;Terry Pratchett;384
+Guards! Guards!;Terry Pratchett;355
+Mort;Terry Pratchett;272
+The Colour of Magic;Terry Pratchett;288
+A Deepness in the Sky;Vernor Vinge;774
+Blindsight;Peter Watts;384
+Children of Time;Adrian Tchaikovsky;600
+The Long Way to a Small, Angry Planet;Becky Chambers;518
+A Memory Called Empire;Arkady Martine;462
+This Is How You Lose the Time War;Amal El-Mohtar and Max Gladstone;209
+'@ -split "`n" | Where-Object { $_.Trim() }
+
+$i = 0
+foreach ($line in $bookCatalog) {
+    $p = $line.Split(';')
+    # mostly finished, a few in progress, a couple barely started
+    $prog = switch ($i % 7) { 5 { 100 } 6 { (30, 55, 78 | Get-Random) } default { 100 } }
+    $items += @{ title = $p[0].Trim(); type = "Book"; length = [int]$p[2].Trim(); progress = $prog; author = $p[1].Trim() }
+    $i++
+}
 
 Write-Host "-> Adding $($items.Count) tracking events ..."
 foreach ($it in $items) {

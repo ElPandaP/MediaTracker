@@ -83,7 +83,7 @@ export function ReviewModal({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="max-w-lg">
         <DialogHeader>
           <DialogTitle>{isEdit ? 'Edit review' : 'Your review'}</DialogTitle>
           <DialogDescription>
@@ -97,10 +97,10 @@ export function ReviewModal({
               title={target.title}
               type={target.type}
               posterUrl={target.posterUrl}
-              className="w-16 shrink-0"
-              sizes="64px"
+              className="w-28 shrink-0 self-start"
+              sizes="112px"
             />
-            <div className="flex flex-1 flex-col gap-3">
+            <div className="flex min-w-0 flex-1 flex-col gap-3">
               <div>
                 <p className="mb-1.5 text-xs font-medium text-muted-foreground">Rating</p>
                 <StarRatingInput value={stars} onChange={setStars} />

@@ -10,6 +10,7 @@ using TaleTrackApp.Features.User.EditUser;
 using TaleTrackApp.Features.User.DeleteUser;
 using TaleTrackApp.Features.Media.AddMedia;
 using TaleTrackApp.Features.Media.GetMedia;
+using TaleTrackApp.Features.Media.GetMediaById;
 using TaleTrackApp.Features.TrackingEvent.AddTrackingEvent;
 using TaleTrackApp.Features.TrackingEvent.GetTrackingEvents;
 using TaleTrackApp.Features.Review.AddReview;
@@ -207,6 +208,7 @@ void configurePipeline()
     GetLibraryEndpoint.Map(apiGroup);
     GetReviewsEndpoint.Map(apiGroup);
     GetPendingReviewsEndpoint.Map(apiGroup);
+    GetMediaByIdEndpoint.Map(apiGroup);
     
     // Internal API endpoints (API Key)
     GetMediaEndpoint.Map(apiGroup);

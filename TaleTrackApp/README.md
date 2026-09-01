@@ -123,6 +123,7 @@ Varios endpoints encadenan `.RequireAuthorization(UserPolicy).RequireAuthorizati
 |---|---|---|---|
 | POST | `/media` | JWT | crea Media suelto vía `MediaService.CreateAsync` (**sin dedup**) |
 | GET | `/media` | **InternalOnly** | lista media con filtros `?type=&limit=&orderBy=` (no filtra por usuario) |
+| GET | `/media/{id}` | JWT | ficha de un media: datos + tu progreso/reseña + todas las reseñas + nota media. Alimenta `/media/[id]` |
 
 ### Tracking
 | Método | Ruta | Auth | Qué hace |

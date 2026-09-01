@@ -29,10 +29,13 @@ public static class GetLibraryEndpoint
 
         try
         {
-            var items = await libraryService.GetForUserAsync(
-                userId, request.Type, request.Status, request.Sort, request.Year, request.Limit);
+            var all = await libraryService.GetForUserAsync(
+                userId, request.Type, request.Status, request.Sort, request.Year);
 
-            return Results.Ok(new { success = true, count = items.Count, data = items });
+            var data = request.Limit is int limit && limit > 0 ? all.Take(limit).ToList() : all;
+
+            // `total` is the count before the limit — lets the client show "50 · see all".
+            return Results.Ok(new { success = true, count = data.Count, total = all.Count, data });
         }
         catch (Exception ex)
         {
