@@ -1,6 +1,12 @@
 import { cookies } from 'next/headers';
 import { API_CONFIG } from './config';
-import type { GetTrackingEventsResponse, GetUserBooksResponse } from '../types';
+import type {
+  GetTrackingEventsResponse,
+  GetUserBooksResponse,
+  GetStatsResponse,
+  GetLibraryResponse,
+  GetReviewsResponse,
+} from '../types';
 
 const SERVER_BASE_URL = process.env.INTERNAL_API_URL ?? 'http://localhost:8080/api';
 
@@ -37,4 +43,34 @@ export async function getTrackingEvents(
 
 export async function getBooks(): Promise<GetUserBooksResponse> {
   return serverFetch<GetUserBooksResponse>('/books');
+}
+
+export async function getStats(year?: number): Promise<GetStatsResponse> {
+  const q = year ? `?year=${year}` : '';
+  return serverFetch<GetStatsResponse>(`/stats${q}`);
+}
+
+export interface LibraryQuery {
+  type?: string;
+  status?: 'in_progress' | 'finished';
+  sort?: 'recent' | 'rating';
+  year?: number;
+  limit?: number;
+}
+
+export async function getLibrary(query: LibraryQuery = {}): Promise<GetLibraryResponse> {
+  const params = new URLSearchParams();
+  for (const [key, value] of Object.entries(query)) {
+    if (value !== undefined && value !== null) params.set(key, String(value));
+  }
+  const qs = params.toString();
+  return serverFetch<GetLibraryResponse>(`/library${qs ? `?${qs}` : ''}`);
+}
+
+export async function getPendingReviews(): Promise<GetLibraryResponse> {
+  return serverFetch<GetLibraryResponse>('/reviews/pending');
+}
+
+export async function getReviews(): Promise<GetReviewsResponse> {
+  return serverFetch<GetReviewsResponse>('/reviews');
 }

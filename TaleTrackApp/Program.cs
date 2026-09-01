@@ -15,11 +15,17 @@ using TaleTrackApp.Features.TrackingEvent.GetTrackingEvents;
 using TaleTrackApp.Features.Review.AddReview;
 using TaleTrackApp.Features.Review.EditReview;
 using TaleTrackApp.Features.Review.DeleteReview;
+using TaleTrackApp.Features.Review.GetReviews;
+using TaleTrackApp.Features.Review.GetPendingReviews;
 using TaleTrackApp.Features.User;
 using TaleTrackApp.Features.Media;
 using TaleTrackApp.Features.TrackingEvent;
 using TaleTrackApp.Features.Review;
 using TaleTrackApp.Features.TrackingEvent.GetUserBooks;
+using TaleTrackApp.Features.Stats;
+using TaleTrackApp.Features.Stats.GetStats;
+using TaleTrackApp.Features.Library;
+using TaleTrackApp.Features.Library.GetLibrary;
 using TaleTrackApp.Auth;
 
 // Load environment variables from .env
@@ -131,6 +137,8 @@ void configureApi()
     builder.Services.AddScoped<MediaService>();
     builder.Services.AddScoped<TrackingEventService>();
     builder.Services.AddScoped<ReviewService>();
+    builder.Services.AddScoped<StatsService>();
+    builder.Services.AddScoped<LibraryService>();
     builder.Services.AddHttpClient<OpenLibraryService>(client =>
     {
         client.Timeout = TimeSpan.FromSeconds(10);
@@ -195,6 +203,10 @@ void configurePipeline()
     // User data endpoints (JWT)
     GetTrackingEventsEndpoint.Map(apiGroup);
     GetUserBooksEndpoint.Map(apiGroup);
+    GetStatsEndpoint.Map(apiGroup);
+    GetLibraryEndpoint.Map(apiGroup);
+    GetReviewsEndpoint.Map(apiGroup);
+    GetPendingReviewsEndpoint.Map(apiGroup);
     
     // Internal API endpoints (API Key)
     GetMediaEndpoint.Map(apiGroup);

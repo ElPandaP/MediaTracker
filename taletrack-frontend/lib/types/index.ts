@@ -107,3 +107,67 @@ export interface AddReviewResponse {
   success: boolean;
   message: string;
 }
+
+// ─── Home / Library / Stats ──────────────────────────────────
+// The backend uses these three type slugs for Media.type.
+export type LibraryType = 'Book' | 'Movie' | 'Series';
+
+export interface LibraryItem {
+  mediaId: number;
+  title: string;
+  type: LibraryType;
+  author?: string | null;
+  posterUrl?: string | null;
+  length: number;
+  isbn?: string | null;
+  progress?: number | null;
+  lastEventDate: string;
+  myRating?: number | null;
+  myReviewId?: number | null;
+}
+
+export interface GetLibraryResponse {
+  success: boolean;
+  count: number;
+  data: LibraryItem[];
+}
+
+export interface YearlyStats {
+  year: number;
+  total: number;
+  byType: { book: number; movie: number; series: number };
+  byMonth: number[]; // length 12, Jan → Dec
+  reviewCount: number;
+}
+
+export interface GetStatsResponse {
+  success: boolean;
+  data: YearlyStats;
+}
+
+export interface ReviewItem {
+  id: number;
+  mediaId: number;
+  rating: number;
+  comment?: string | null;
+  createdAt: string;
+  updatedAt?: string | null;
+  media?: {
+    id: number;
+    title: string;
+    type: LibraryType;
+    posterUrl?: string | null;
+    author?: string | null;
+  };
+}
+
+export interface GetReviewsResponse {
+  success: boolean;
+  count: number;
+  data: ReviewItem[];
+}
+
+export interface EditReviewRequest {
+  rating: number;
+  comment?: string;
+}

@@ -40,8 +40,12 @@ export default function RegisterPage() {
   const [success, setSuccess] = useState(false);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) router.replace('/dashboard');
+    if (!loading && isAuthenticated) router.replace('/');
   }, [isAuthenticated, loading, router]);
+
+  // `/` renders a different tree depending on the auth cookie (landing vs home),
+  // so an auth transition needs a full document load, not a soft navigation.
+  const goHome = () => { window.location.assign('/'); };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -57,7 +61,7 @@ export default function RegisterPage() {
           if (loginRes.success && loginRes.token) {
             const decoded = parseJwt(loginRes.token);
             login({ id: parseInt(decoded?.sub ?? '0'), username: decoded?.unique_name ?? username, email: decoded?.email ?? email });
-            router.push('/dashboard');
+            goHome();
           }
         } catch { router.push('/login'); }
       }
@@ -76,7 +80,7 @@ export default function RegisterPage() {
       if (res.success && res.token) {
         const decoded = parseJwt(res.token);
         login({ id: parseInt(decoded?.sub ?? '0'), username: decoded?.unique_name ?? 'User', email: decoded?.email ?? '' });
-        router.push('/dashboard');
+        goHome();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-up failed.');

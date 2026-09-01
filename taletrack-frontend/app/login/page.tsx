@@ -18,8 +18,12 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    if (!loading && isAuthenticated) router.replace('/dashboard');
+    if (!loading && isAuthenticated) router.replace('/');
   }, [isAuthenticated, loading, router]);
+
+  // `/` renders a different tree depending on the auth cookie (landing vs home),
+  // so an auth transition needs a full document load, not a soft navigation.
+  const goHome = () => { window.location.assign('/'); };
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -30,7 +34,7 @@ export default function LoginPage() {
       if (res.success && res.token) {
         const decoded = parseJwt(res.token);
         login({ id: parseInt(decoded?.sub ?? '0'), username: decoded?.unique_name ?? email.split('@')[0], email: decoded?.email ?? email });
-        router.push('/dashboard');
+        goHome();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Invalid email or password.');
@@ -47,7 +51,7 @@ export default function LoginPage() {
       if (res.success && res.token) {
         const decoded = parseJwt(res.token);
         login({ id: parseInt(decoded?.sub ?? '0'), username: decoded?.unique_name ?? 'User', email: decoded?.email ?? '' });
-        router.push('/dashboard');
+        goHome();
       }
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Google sign-in failed.');

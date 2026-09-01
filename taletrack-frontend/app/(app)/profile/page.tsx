@@ -1,7 +1,6 @@
 'use client';
 
 import { useEffect, useState, useCallback } from 'react';
-import { useRouter } from 'next/navigation';
 import {
   User, Mail, BookOpen, Film, Tv, BookMarked,
   Activity, Calendar, LogOut, Trash2, Save,
@@ -40,7 +39,6 @@ function Avatar({ username }: { username: string }) {
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
-  const router = useRouter();
   const [events, setEvents] = useState<TrackingEvent[]>([]);
   const [loading, setLoading] = useState(true);
   const [editUsername, setEditUsername] = useState(user?.username ?? '');
@@ -105,14 +103,14 @@ export default function ProfilePage() {
     }
   };
 
-  const handleLogout = () => { logout(); router.push('/'); };
+  const handleLogout = () => { logout(); window.location.assign('/'); };
 
   const handleDelete = async () => {
     if (!deleteConfirm) { setDeleteConfirm(true); return; }
     try {
       await apiClient.delete(`/user/${user?.id}`, true, false);
       logout();
-      router.push('/');
+      window.location.assign('/');
     } catch (err) {
       alert(err instanceof Error ? err.message : 'Failed to delete account.');
     }

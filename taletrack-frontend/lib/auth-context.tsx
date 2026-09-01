@@ -25,12 +25,18 @@ const AuthContext = createContext<AuthContextType>({
   logout: () => {},
 });
 
-export function parseJwt(token: string): { email?: string; unique_name?: string; sub?: string } | null {
+export function parseJwt(
+  token: string,
+): { email?: string; unique_name?: string; sub?: string; exp?: number } | null {
   try {
     return JSON.parse(atob(token.split('.')[1]));
   } catch {
     return null;
   }
+}
+
+function isExpired(decoded: { exp?: number } | null): boolean {
+  return !decoded || typeof decoded.exp !== 'number' || decoded.exp * 1000 <= Date.now();
 }
 
 // --- External store ---
@@ -64,6 +70,14 @@ function getAuthSnapshot(): AuthSnapshot {
     return cachedSnapshot;
   }
   const decoded = parseJwt(token);
+  if (isExpired(decoded)) {
+    // Token is dead — drop it so the UI reflects logged-out state.
+    localStorage.removeItem('token');
+    document.cookie = 'tt-token=; path=/; max-age=0';
+    cachedToken = null;
+    cachedSnapshot = UNAUTHENTICATED;
+    return cachedSnapshot;
+  }
   cachedSnapshot = {
     isAuthenticated: true,
     loading: false,
