@@ -3,8 +3,13 @@ import type { ExtractDataMessage, ExtractDataResponse } from './types';
 const extractBtn = document.getElementById('extractBtn') as HTMLButtonElement;
 const resultDiv = document.getElementById('result') as HTMLDivElement;
 
+const statusRow = (kind: 'loading' | 'success' | 'error', text: string): string => {
+  const icon = kind === 'loading' ? '<span class="spinner"></span>' : '';
+  return `<p class="status ${kind}">${icon}${text}</p>`;
+};
+
 extractBtn.addEventListener('click', async () => {
-  resultDiv.innerHTML = '<p class="loading">⏳ Extrayendo datos...</p>';
+  resultDiv.innerHTML = statusRow('loading', 'Extrayendo datos…');
   extractBtn.disabled = true;
 
   try {
@@ -26,7 +31,7 @@ extractBtn.addEventListener('click', async () => {
 
     // Only run on Netflix
     if (!tab.url.includes('netflix.com')) {
-      resultDiv.innerHTML = '<p class="error">❌ Por favor, abre una página de Netflix primero.</p>';
+      resultDiv.innerHTML = statusRow('error', 'Abre una página de Netflix primero.');
       extractBtn.disabled = false;
       return;
     }
@@ -39,7 +44,7 @@ extractBtn.addEventListener('click', async () => {
       message,
       (response: ExtractDataResponse) => {
         if (chrome.runtime.lastError) {
-          resultDiv.innerHTML = `<p class="error">❌ Error:  ${chrome.runtime.lastError.message}</p>`;
+          resultDiv.innerHTML = statusRow('error', `Error: ${chrome.runtime.lastError.message}`);
           extractBtn.disabled = false;
           return;
         }
@@ -47,7 +52,7 @@ extractBtn.addEventListener('click', async () => {
         if (response.success && response.data) {
           displayData(response.data);
         } else {
-          resultDiv.innerHTML = `<p class="error">❌ ${response.error || 'Error desconocido'}</p>`;
+          resultDiv.innerHTML = statusRow('error', response.error || 'Error desconocido');
         }
 
         extractBtn.disabled = false;
@@ -55,16 +60,35 @@ extractBtn.addEventListener('click', async () => {
     );
 
   } catch (error) {
-    resultDiv.innerHTML = `<p class="error">❌ Error: ${(error as Error).message}</p>`;
+    resultDiv.innerHTML = statusRow('error', `Error: ${(error as Error).message}`);
     extractBtn.disabled = false;
   }
 });
 
+/** "1h 47min" / "48min" from seconds. */
+function fmtSecs(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.round((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
 function displayData(data: any) {
   const isSeries = data.type === 'series';
 
+  const progressValue =
+    data.progressPercent !== undefined
+      ? `${data.progressPercent}%` +
+        (data.positionSeconds !== undefined && data.runtimeSeconds !== undefined
+          ? ` · ${fmtSecs(data.positionSeconds)} / ${fmtSecs(data.runtimeSeconds)}`
+          : '')
+      : null;
+
+  const totalDuration =
+    data.runtimeSeconds !== undefined ? fmtSecs(data.runtimeSeconds) : data.duration || null;
+
   resultDiv.innerHTML = `
-    <p class="success">Se extrajeron bien los datos</p>
+    ${statusRow('success', 'Datos extraídos correctamente')}
     <div class="media-info">
       <div class="info-row">
         <span class="info-label">Título</span>
@@ -98,16 +122,22 @@ function displayData(data: any) {
           <span class="info-value">${data.episodeTitle}</span>
         </div>
       ` : ''}
-      ${data.genres.length > 0 ? `
+      ${progressValue ? `
+        <div class="info-row">
+          <span class="info-label">Progreso</span>
+          <span class="info-value">${progressValue}</span>
+        </div>
+      ` : ''}
+      ${totalDuration ? `
+        <div class="info-row">
+          <span class="info-label">Duración total</span>
+          <span class="info-value">${totalDuration}</span>
+        </div>
+      ` : ''}
+      ${data.genres && data.genres.length > 0 ? `
         <div class="info-row">
           <span class="info-label">Géneros</span>
           <span class="info-value">${data.genres.join(', ')}</span>
-        </div>
-      ` : ''}
-      ${data.duration ? `
-        <div class="info-row">
-          <span class="info-label">Duración</span>
-          <span class="info-value">${data.duration}</span>
         </div>
       ` : ''}
       ${data.description ? `
@@ -117,8 +147,8 @@ function displayData(data: any) {
         </div>
       ` : ''}
     </div>
-    <details style="margin-top: 16px;">
-      <summary style="cursor: pointer; color: #e50914;">Ver JSON</summary>
+    <details>
+      <summary>Ver JSON</summary>
       <pre>${JSON.stringify(data, null, 2)}</pre>
     </details>
   `;

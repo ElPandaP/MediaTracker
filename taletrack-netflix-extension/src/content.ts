@@ -63,6 +63,53 @@ async function requestNetflixData(): Promise<void> {
   });
 }
 
+/** "1h 47min" / "48min" from a total number of seconds. */
+function formatRuntime(totalSeconds: number): string {
+  const s = Math.max(0, Math.round(totalSeconds));
+  const h = Math.floor(s / 3600);
+  const m = Math.round((s % 3600) / 60);
+  return h > 0 ? `${h}h ${m}min` : `${m}min`;
+}
+
+/** Current playback position + total runtime + progress %, when watching. */
+function extractPlayback(): { progressPercent?: number; positionSeconds?: number; runtimeSeconds?: number } | null {
+  let positionMs: number | undefined;
+  let durationMs: number | undefined;
+
+  // 1. Netflix player API (from the MAIN-world injected script) — most accurate
+  const player = netflixData?.player;
+  if (player) {
+    if (Number.isFinite(player.currentTime)) positionMs = player.currentTime;
+    if (Number.isFinite(player.duration) && player.duration > 0) durationMs = player.duration;
+  }
+
+  // 2. The <video> element (content scripts share the page DOM)
+  const video = document.querySelector('video') as HTMLVideoElement | null;
+  if (video) {
+    if (positionMs === undefined && Number.isFinite(video.currentTime)) {
+      positionMs = video.currentTime * 1000;
+    }
+    if (durationMs === undefined && Number.isFinite(video.duration) && video.duration > 0) {
+      durationMs = video.duration * 1000;
+    }
+  }
+
+  // 3. Falcor runtime (seconds) — total length only, last resort
+  if (durationMs === undefined && Number.isFinite(netflixData?.runtime)) {
+    durationMs = netflixData.runtime * 1000;
+  }
+
+  if (positionMs === undefined && durationMs === undefined) return null;
+
+  const result: { progressPercent?: number; positionSeconds?: number; runtimeSeconds?: number } = {};
+  if (positionMs !== undefined) result.positionSeconds = Math.round(positionMs / 1000);
+  if (durationMs !== undefined) result.runtimeSeconds = Math.round(durationMs / 1000);
+  if (positionMs !== undefined && durationMs !== undefined && durationMs > 0) {
+    result.progressPercent = Math.max(0, Math.min(100, Math.round((positionMs / durationMs) * 100)));
+  }
+  return result;
+}
+
 function extractNetflixData(): NetflixMedia | null {
   try {
     console.log('URL:', window.location.href);
@@ -78,6 +125,11 @@ function extractNetflixData(): NetflixMedia | null {
 
     const { title, episodeTitle } = cleanTitle(rawTitle);
     console.log('Clean title:', title, 'Episode title:', episodeTitle);
+
+    const metaEpisodeTitle = seasonEpisodeFromMetadata()?.episodeTitle ?? null;
+
+    const playback = extractPlayback();
+    console.log('Playback:', playback);
 
     const year = extractYear();
     const genres = extractGenres();
@@ -96,14 +148,32 @@ function extractNetflixData(): NetflixMedia | null {
     if (year) {
       media.year = year;
     }
-    if (duration) {
-      media.duration = duration;
-    }
     if (description) {
       media.description = description;
     }
     if (imageUrl) {
       media.imageUrl = imageUrl;
+    }
+
+    // Playback: progress %, current position, total runtime
+    if (playback) {
+      if (playback.progressPercent !== undefined) {
+        media.progressPercent = playback.progressPercent;
+      }
+      if (playback.positionSeconds !== undefined) {
+        media.positionSeconds = playback.positionSeconds;
+      }
+      if (playback.runtimeSeconds !== undefined) {
+        media.runtimeSeconds = playback.runtimeSeconds;
+      }
+    }
+
+    // Prefer the real runtime for the human-readable duration; fall back to the
+    // DOM string (only present on browse/title pages, not while watching).
+    if (media.runtimeSeconds !== undefined) {
+      media.duration = formatRuntime(media.runtimeSeconds);
+    } else if (duration) {
+      media.duration = duration;
     }
 
     if (type === 'series') {
@@ -113,8 +183,8 @@ function extractNetflixData(): NetflixMedia | null {
       if (episode) {
         media.episode = episode;
       }
-      if (episodeTitle) {
-        media.episodeTitle = episodeTitle;
+      if (metaEpisodeTitle || episodeTitle) {
+        media.episodeTitle = metaEpisodeTitle || episodeTitle || undefined;
       }
     }
 
@@ -125,8 +195,35 @@ function extractNetflixData(): NetflixMedia | null {
   }
 }
 
+/** Find season/episode sequence numbers in the Netflix player metadata. */
+function seasonEpisodeFromMetadata(): { season: number | null; episode: number | null; episodeTitle: string | null } | null {
+  const video = netflixData?.player?.metadata?.video ?? netflixData?.player?.metadata?._metadata?.video;
+  if (!video || !Array.isArray(video.seasons)) return null;
+
+  const currentId = video.currentEpisode ?? video.episodeId;
+  if (!currentId) return null;
+
+  for (const season of video.seasons) {
+    const ep = (season.episodes ?? []).find((e: any) => e.id === currentId);
+    if (ep) {
+      return {
+        season: season.seq ?? season.season ?? null,
+        episode: ep.seq ?? ep.episode ?? null,
+        episodeTitle: ep.title ?? null,
+      };
+    }
+  }
+  return null;
+}
+
 function extractSeasonEpisode(rawTitle: string): { season: number | null; episode: number | null } {
   const url = window.location.href;
+
+  // Netflix player metadata is the most reliable source while watching
+  const fromMeta = seasonEpisodeFromMetadata();
+  if (fromMeta && (fromMeta.season !== null || fromMeta.episode !== null)) {
+    return { season: fromMeta.season, episode: fromMeta.episode };
+  }
 
   // Use data from the injected script first
   if (netflixData?.summary) {
@@ -306,6 +403,16 @@ function extractType(season: number | null, episode: number | null): 'movie' | '
   if (season !== null || episode !== null) {
     console.log('Método 1');
     return 'series';
+  }
+
+  // Netflix player metadata is explicit about show vs movie
+  const metaVideo = netflixData?.player?.metadata?.video ?? netflixData?.player?.metadata?._metadata?.video;
+  if (metaVideo?.type === 'show' || Array.isArray(metaVideo?.seasons)) {
+    console.log('Método 0 (metadata)');
+    return 'series';
+  }
+  if (metaVideo?.type === 'movie') {
+    return 'movie';
   }
 
   const url = window.location.href;

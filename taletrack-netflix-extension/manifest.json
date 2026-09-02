@@ -1,8 +1,8 @@
 {
   "manifest_version": 3,
-  "name": "Netflix Tracker",
+  "name": "TaleTrack for Netflix",
   "version": "1.0.0",
-  "description": "Extrae información de Netflix para tu tracker personal",
+  "description": "Extrae información de Netflix para tu biblioteca de TaleTrack",
   "permissions": [
     "activeTab",
     "scripting"

@@ -4,8 +4,48 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Netflix Tracker</title>
+  <title>TaleTrack · Netflix</title>
   <style>
+    /* ─── TaleTrack cottagecore design system ─────────────────
+       Ported from taletrack-frontend/app/globals.css. Light by
+       default, warm forest night under prefers-color-scheme: dark. */
+    :root {
+      --background: oklch(0.97 0.015 82);
+      --foreground: oklch(0.16 0.05 55);
+      --card: oklch(0.99 0.007 82);
+      --card-foreground: oklch(0.16 0.05 55);
+      --primary: oklch(0.48 0.09 132);
+      --primary-foreground: oklch(0.99 0.007 82);
+      --secondary: oklch(0.93 0.025 82);
+      --muted: oklch(0.93 0.025 82);
+      --muted-foreground: oklch(0.47 0.04 55);
+      --border: oklch(0.85 0.025 77);
+      --destructive: oklch(0.55 0.2 27);
+      --success: oklch(0.5 0.16 150);
+      --warning: oklch(0.62 0.13 65);
+      --radius: 0.75rem;
+      color-scheme: light;
+    }
+
+    @media (prefers-color-scheme: dark) {
+      :root {
+        --background: oklch(0.11 0.03 62);
+        --foreground: oklch(0.91 0.025 78);
+        --card: oklch(0.14 0.03 62);
+        --card-foreground: oklch(0.91 0.025 78);
+        --primary: oklch(0.62 0.09 132);
+        --primary-foreground: oklch(0.11 0.03 62);
+        --secondary: oklch(0.17 0.033 62);
+        --muted: oklch(0.17 0.033 62);
+        --muted-foreground: oklch(0.6 0.035 62);
+        --border: oklch(0.28 0.02 62);
+        --destructive: oklch(0.7 0.19 25);
+        --success: oklch(0.72 0.16 150);
+        --warning: oklch(0.72 0.14 65);
+        color-scheme: dark;
+      }
+    }
+
     * {
       margin: 0;
       padding: 0;
@@ -13,55 +53,93 @@
     }
 
     body {
-      width: 450px;
-      min-height: 200px;
-      padding: 20px;
+      width: 400px;
+      min-height: 180px;
+      padding: 18px;
       font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-      background: #141414;
-      color: #fff;
+      font-size: 14px;
+      line-height: 1.5;
+      background: var(--background);
+      color: var(--foreground);
     }
 
-    h1 {
-      font-size: 20px;
-      margin-bottom: 16px;
+    .brand {
       display: flex;
       align-items: center;
-      gap: 8px;
+      gap: 9px;
+      margin-bottom: 16px;
+    }
+
+    .brand-mark {
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      width: 28px;
+      height: 28px;
+      border-radius: calc(var(--radius) * 0.8);
+      border: 1px solid color-mix(in oklab, var(--primary) 25%, transparent);
+      background: color-mix(in oklab, var(--primary) 15%, transparent);
+      color: var(--primary);
+    }
+
+    .brand-mark svg {
+      width: 16px;
+      height: 16px;
+    }
+
+    .brand-name {
+      font-family: 'Cormorant Garamond', Georgia, 'Times New Roman', serif;
+      font-size: 21px;
+      font-weight: 600;
+      letter-spacing: -0.01em;
+    }
+
+    .brand-tag {
+      margin-left: auto;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.12em;
+      color: var(--muted-foreground);
     }
 
     button {
       width: 100%;
-      padding: 12px;
-      background: #e50914;
-      color: white;
+      padding: 11px 14px;
+      background: var(--primary);
+      color: var(--primary-foreground);
       border: none;
-      border-radius: 4px;
+      border-radius: calc(var(--radius) * 1.05);
       cursor: pointer;
       font-size: 14px;
       font-weight: 600;
-      transition: background 0.2s;
+      font-family: inherit;
+      transition: background 0.2s, opacity 0.2s;
     }
 
     button:hover {
-      background: #f40612;
+      background: color-mix(in oklab, var(--primary) 88%, black);
     }
 
     button:active {
-      background: #c40812;
+      transform: translateY(1px);
     }
 
     button:disabled {
-      background: #666;
+      opacity: 0.55;
       cursor: not-allowed;
     }
 
     #result {
       margin-top: 16px;
       padding: 16px;
-      background: #222;
-      border-radius: 4px;
+      background: var(--card);
+      color: var(--card-foreground);
+      border: 1px solid var(--border);
+      border-radius: calc(var(--radius) * 1.8);
+      box-shadow: 0 1px 2px oklch(0 0 0 / 0.05);
       font-size: 13px;
-      max-height: 500px;
+      max-height: 460px;
       overflow-y: auto;
     }
 
@@ -69,70 +147,103 @@
       display: none;
     }
 
-    .error {
-      color: #e50914;
+    .status {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-weight: 600;
     }
 
-    .success {
-      color: #46d369;
+    .status.error { color: var(--destructive); }
+    .status.success { color: var(--success); }
+    .status.loading { color: var(--warning); }
+
+    .spinner {
+      width: 13px;
+      height: 13px;
+      border: 2px solid color-mix(in oklab, var(--warning) 30%, transparent);
+      border-top-color: var(--warning);
+      border-radius: 50%;
+      animation: spin 0.7s linear infinite;
+      flex-shrink: 0;
     }
 
-    .loading {
-      color: #ffa500;
-    }
-
-    pre {
-      margin: 0;
-      white-space: pre-wrap;
-      word-wrap: break-word;
-      font-family: 'Courier New', monospace;
-      font-size: 12px;
-      line-height: 1.5;
-    }
+    @keyframes spin { to { transform: rotate(360deg); } }
 
     .media-info {
       display: flex;
       flex-direction: column;
-      gap: 12px;
+      gap: 11px;
+      margin-top: 14px;
     }
 
     .info-row {
       display: flex;
       flex-direction: column;
-      gap: 4px;
+      gap: 3px;
     }
 
     .info-label {
       font-weight: 600;
-      color: #e50914;
-      font-size: 12px;
+      color: var(--muted-foreground);
+      font-size: 10px;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
     }
 
     .info-value {
-      color: #fff;
+      color: var(--foreground);
     }
 
     details {
-      cursor: pointer;
+      margin-top: 16px;
+      border-top: 1px solid var(--border);
+      padding-top: 12px;
     }
 
     summary {
       cursor: pointer;
-      color: #e50914;
+      color: var(--primary);
+      font-weight: 600;
       user-select: none;
+      list-style: none;
     }
 
+    summary::-webkit-details-marker { display: none; }
+
     summary:hover {
-      color: #f40612;
+      color: color-mix(in oklab, var(--primary) 82%, black);
+    }
+
+    pre {
+      margin: 10px 0 0;
+      padding: 12px;
+      background: var(--secondary);
+      border-radius: calc(var(--radius) * 0.8);
+      white-space: pre-wrap;
+      word-wrap: break-word;
+      font-family: 'SF Mono', 'Cascadia Code', 'Fira Code', Consolas, monospace;
+      font-size: 12px;
+      line-height: 1.55;
+      color: var(--muted-foreground);
     }
   </style>
 </head>
 
 <body>
-  <h1>🎬 Netflix Tracker</h1>
+  <div class="brand">
+    <span class="brand-mark">
+      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"
+        stroke-linejoin="round" aria-hidden="true">
+        <path d="M11 20A7 7 0 0 1 9.8 6.1C15.5 5 17 4.48 19 2c1 2 2 4.18 2 8 0 5.5-4.78 10-10 10Z" />
+        <path d="M2 21c0-3 1.85-5.36 5.08-6C9.5 14.52 12 13 13 12" />
+      </svg>
+    </span>
+    <span class="brand-name">TaleTrack</span>
+    <span class="brand-tag">Netflix</span>
+  </div>
 
-  <button id="extractBtn">Extraer Datos de Netflix</button>
+  <button id="extractBtn">Extraer datos de Netflix</button>
 
   <div id="result"></div>
 

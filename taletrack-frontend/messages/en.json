@@ -38,7 +38,7 @@
   "home.inProgress": "In progress",
   "home.inProgress.empty": "Nothing in progress.",
   "home.toReview": "To review",
-  "home.toReview.empty": "All caught up. ✨",
+  "home.toReview.empty": "All caught up.",
   "home.toReview.cta": "Write a review ({count})",
   "home.toReview.reviewItem": "Review: {title}",
   "home.topOfYear": "Top of the year",
